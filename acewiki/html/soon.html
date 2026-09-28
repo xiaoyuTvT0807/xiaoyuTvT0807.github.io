@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块待开发 · 车辆档案库</title>
+<style>
+:root{
+  --bg:#f3f4f7; --surface:#fff; --ink:#23272f; --ink-2:#5b626e; --muted:#9aa1ad;
+  --line:rgba(35,39,47,.08); --accent:#6d5efc; --accent-ink:#5a45f5;
+  --accent-soft:rgba(109,94,252,.10); --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'PingFang SC','Microsoft YaHei',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--ink);min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:40px 20px;
+  -webkit-font-smoothing:antialiased;
+}
+.box{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:36px 32px;text-align:center;max-width:420px;width:100%;
+}
+.box svg{color:var(--muted);margin-bottom:14px}
+.box h2{font-size:18px;font-weight:700}
+.box p{font-size:13.5px;color:var(--ink-2);margin-top:8px;line-height:1.8}
+</style>
+</head>
+<body>
+  <div class="box">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 12h6M12 9v6"/></svg>
+    <h2 id="t">模块待开发</h2>
+    <p>左侧导航已预留入口，上传数据后即可接入。</p>
+  </div>
+<script>
+  var m=new URLSearchParams(location.search).get('m')||'该模块';
+  document.getElementById('t').textContent='「'+m+'」模块待开发';
+</script>
+</body>
+</html>
