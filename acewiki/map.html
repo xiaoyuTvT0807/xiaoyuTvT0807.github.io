@@ -163,7 +163,7 @@ html.embedded .sel[data-dd="__ver"]{display:none}
 if(window.parent!==window) document.documentElement.classList.add('embedded');
 
 /* ---------- 版本 & 图片地址 ---------- */
-const VERSIONS=[{id:'29836883',label:'29836883',tracks:'../ace/29836883/tracks.json'}];
+const VERSIONS=[{id:'29836883',label:'29836883',tracks:'ace/29836883/tracks.json'}];
 const DEFAULT_VER='29836883';
 /* 版本号 → 时间：版本号是「Unix 时间戳的分钟数」 */
 function verTime(id){
@@ -185,7 +185,7 @@ const resolveTracksUrl=v=>verCfg(v).tracks||'tracks.json';
 /* 地图图片：优先 CDN（仓库 images/），失败回退本地 ace/<版本>/map/，再失败露占位字 */
 const CDN_BASE='https://gcore.jsdelivr.net/gh/xiaoyuTvT0807/vehicle-archive@main/';
 const IMG_CDN=CDN_BASE+'images/';
-const imgLocal=n=>'../ace/'+CUR_VER+'/map/'+n;
+const imgLocal=n=>'ace/'+CUR_VER+'/map/'+n;
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const initial=s=>{ s=String(s||'').trim(); if(!s) return '?'; return /[A-Za-z]/.test(s[0])?s[0].toUpperCase():s[0]; };

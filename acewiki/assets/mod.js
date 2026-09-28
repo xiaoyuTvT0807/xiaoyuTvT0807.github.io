@@ -7,7 +7,7 @@
 'use strict';
 if(window.parent!==window) document.documentElement.classList.add('embedded');
 
-const VERSIONS=[{id:'29836883',label:'29836883',dir:'../ace/29836883/'}];
+const VERSIONS=[{id:'29836883',label:'29836883',dir:'ace/29836883/'}];
 const DEFAULT_VER='29836883';
 function getVerParam(){
   const p=new URLSearchParams(location.search);
@@ -82,7 +82,7 @@ const srank=k=>{k=String(k||'');if(k.indexOf('常驻')>=0)return -1e9;const m=k.
 const RCOLOR={'普通':'#6b7280','稀有':'#2563eb','史诗':'#9333ea','传说':'#d97706','神话':'#dc2626','限定':'#0d9488'};
 const rcolor=l=>RCOLOR[l]||'#9aa1ad';
 const IMG_CDN='https://gcore.jsdelivr.net/gh/xiaoyuTvT0807/vehicle-archive@main/images/';
-const imgLocal=n=>'../ace/'+CUR_VER+'/img/'+n;
+const imgLocal=n=>'ace/'+CUR_VER+'/img/'+n;
 document.addEventListener('error',function(e){
   const img=e.target;
   if(!img||img.tagName!=='IMG') return;
