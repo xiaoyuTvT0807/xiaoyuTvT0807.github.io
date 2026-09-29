@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>地图 · 车辆档案库</title>
+<style>
+:root{
+  --bg:#f3f4f7;
+  --surface:#fff;
+  --surface-2:rgba(244,245,248,.62);
+  --ink:#23272f;
+  --ink-2:#5b626e;
+  --muted:#9aa1ad;
+  --line:rgba(35,39,47,0.08);
+  --line-2:rgba(35,39,47,0.13);
+  --accent:#6d5efc;
+  --accent-ink:#5a45f5;
+  --accent-soft:rgba(109,94,252,0.10);
+  --radius:16px;
+  --radius-sm:10px;
+  --sh-1:0 1px 2px rgba(35,39,47,.04), 0 1px 3px rgba(35,39,47,.05);
+  --sh-2:0 10px 28px rgba(35,39,47,.10), 0 2px 6px rgba(35,39,47,.05);
+  --sh-3:0 18px 44px rgba(35,39,47,.14);
+  --font:'PingFang SC','Microsoft YaHei',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(109,94,252,.16);color:var(--accent-ink)}
+.main{padding:22px 26px 56px}
+
+/* ---------- 顶栏 ---------- */
+.toolbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
+  padding:15px 26px 13px;margin:0 -26px 16px;
+  background:rgba(243,244,247,.86);
+  backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--line);
+}
+.toolbar h2{font-size:18px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:baseline;gap:7px;flex:0 0 auto;white-space:nowrap}
+.toolbar .count{font-size:11px;font-weight:500;color:var(--muted);background:#eceef3;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.selects{display:flex;gap:7px;flex-wrap:wrap;align-items:center;flex:0 1 auto;min-width:0}
+.selects::-webkit-scrollbar{height:0}
+.sel{position:relative;min-width:96px;flex:0 0 auto}
+.sel-btn{
+  display:flex;align-items:center;gap:7px;width:100%;justify-content:flex-start;
+  padding:7px 11px;border-radius:var(--radius-sm);font-size:12.5px;cursor:pointer;user-select:none;
+  background:#fff;border:1px solid var(--line-2);color:var(--ink-2);box-shadow:var(--sh-1);transition:.15s;font-family:inherit;
+  white-space:nowrap;
+}
+.sel-btn>span{white-space:nowrap}
+.sel-btn:hover{border-color:var(--accent);color:var(--ink)}
+.sel-btn .ic{width:18px;height:18px;flex:0 0 18px;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;background:rgba(35,39,47,.06);color:var(--ink-2);font-size:10px;font-weight:700;line-height:1;transition:.15s}
+.sel-btn:hover .ic{background:var(--accent-soft);color:var(--accent-ink)}
+.sel-btn .arrow{font-size:8px;color:var(--muted);margin-left:auto;transition:transform .2s ease;line-height:1}
+.sel.open .sel-btn{border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 3px var(--accent-soft)}
+.sel.open .sel-btn .ic{background:var(--accent-soft);color:var(--accent-ink)}
+.sel.open .sel-btn .arrow{transform:rotate(180deg);color:var(--accent-ink)}
+.sel-list{position:absolute;top:calc(100% + 6px);left:0;min-width:100%;max-height:340px;overflow:auto;z-index:40;
+  display:none;flex-direction:column;gap:2px;padding:6px;border-radius:var(--radius-sm);background:rgba(255,255,255,.94);
+  backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid var(--line);box-shadow:var(--sh-3)}
+.sel.open .sel-list{display:flex;animation:dropIn .16s ease}
+@keyframes dropIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.sel-list .opt{padding:7px 10px;border-radius:7px;font-size:12.5px;color:var(--ink-2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.sel-list .opt:hover{background:var(--accent-soft);color:var(--accent-ink)}
+.sel-list .opt.on{color:var(--accent-ink);font-weight:600}
+.sel-list .opt.on::after{content:"✓";margin-left:auto;font-size:11px}
+.sel-list .opt .hint{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:400}
+.sel-list .opt.on .hint{display:none}
+/* 版本下拉：保留日期 */
+.sel[data-dd="__ver"] .opt.on .hint{display:inline}
+.sel-btn .vtime{font-style:normal;font-size:10.5px;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.search{margin-left:auto;position:relative;display:flex;align-items:center;flex:1 1 130px;min-width:104px;max-width:260px}
+.search input{width:100%;min-width:0;padding:8px 12px 8px 34px;border-radius:var(--radius-sm);
+  background:#fff;border:1px solid var(--line-2);color:var(--ink);font-size:12.5px;outline:none;transition:.15s;box-shadow:var(--sh-1);font-family:inherit}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted);opacity:.6;pointer-events:none}
+
+/* 被外壳 iframe 嵌入时：版本下拉由外壳侧栏提供，页内不再重复 */
+html.embedded .sel[data-dd="__ver"]{display:none}
+
+/* 竖屏 / 窄屏：标题+搜索一行，筛选整行另起 */
+@media (max-width:700px){
+  .toolbar,.trow{flex-wrap:wrap;row-gap:8px}
+  .toolbar h2{flex:0 1 auto;min-width:0;overflow:hidden;font-size:17px}
+  .search{flex:1 1 120px;min-width:96px;max-width:none;margin-left:auto}
+  .selects{flex:1 1 100%;order:3;gap:6px;row-gap:6px}
+  .sel{flex:0 1 auto}
+}
+@media (max-width:420px){
+  .search{flex:1 1 100%}
+}
+
+/* ---------- 地图卡 ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px}
+.track{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;cursor:pointer;box-shadow:var(--sh-1);
+  transition:transform .22s cubic-bezier(.23,1,.32,1), box-shadow .22s, border-color .22s}
+.track:hover{transform:translateY(-5px);box-shadow:var(--sh-3);border-color:color-mix(in srgb,var(--accent) 38%,transparent)}
+.track:active{transform:translateY(-2px) scale(.992)}
+.track .pic{aspect-ratio:16/10;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:linear-gradient(158deg,#eef1f6,#f7f8fa 70%);border-bottom:1px solid var(--line)}
+.track .pic img{width:100%;height:100%;object-fit:contain;opacity:0;transition:transform .35s cubic-bezier(.23,1,.32,1),opacity .35s ease}
+.track .pic.ok img{opacity:1}
+.track:hover .pic img{transform:scale(1.06)}
+.track .pic .ph{font-family:var(--font);font-size:30px;font-weight:700;
+  background:linear-gradient(135deg,#b9c0cc,#8a93a3);-webkit-background-clip:text;background-clip:text;color:transparent}
+.track .pic .ph-ic{position:absolute;top:9px;left:10px;width:20px;height:20px;color:var(--accent-ink);opacity:.4}
+.track .pic.ok .ph,.track .pic.ok .ph-ic{display:none}
+.track .body{padding:11px 13px 13px}
+.track .nm{font-size:14.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track .meta{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11px;padding:3px 9px;border-radius:999px;background:#f4f5f8;color:var(--ink-2);border:1px solid var(--line)}
+.tag.reg{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+.track .foot{margin-top:10px;display:flex;align-items:baseline;justify-content:space-between;
+  font-size:12px;color:var(--ink-2);background:#f7f8fa;border:1px solid var(--line);border-radius:var(--radius-sm);padding:7px 10px}
+.track .foot b{color:var(--accent-ink);font-size:14px}
+
+.loading,.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:56px 20px;
+  color:var(--ink-2);text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1)}
+.empty .big{font-size:16px;font-weight:600;color:var(--ink-2)}
+
+/* ---------- 详情 ---------- */
+.mask{position:fixed;inset:0;z-index:90;background:rgba(23,26,32,.42);backdrop-filter:blur(3px);
+  display:none;align-items:flex-start;justify-content:center;padding:44px 18px;overflow:auto}
+.mask.open{display:flex}
+.modal{--q:#6d5efc;width:min(560px,100%);background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  box-shadow:var(--sh-3);padding:23px 22px 22px;position:relative;overflow:hidden;animation:pop .18s ease}
+.modal::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--accent),#a99bff)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.mclose{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);
+  background:#fff;color:var(--ink-2);font-size:15px;cursor:pointer;line-height:1}
+.mclose:hover{color:var(--accent-ink);border-color:var(--accent)}
+.mhd{display:flex;align-items:center;gap:14px;padding-right:34px;padding-bottom:15px;border-bottom:1px solid var(--line)}
+.mhd h3{font-size:20px;font-weight:700;letter-spacing:.2px}
+.mhd .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.mpic{width:100%;aspect-ratio:16/9;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--line);margin-top:14px;
+  background:linear-gradient(158deg,#eef1f6,#f7f8fa);display:flex;align-items:center;justify-content:center;position:relative}
+.mpic img{width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .3s}
+.mpic.ok img{opacity:1}
+.mpic .ph{font-size:30px;font-weight:700;background:linear-gradient(135deg,#b9c0cc,#8a93a3);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mpic.ok .ph{display:none}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.mkv{background:#f7f8fa;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 11px}
+.mkv .k{font-size:11px;color:var(--muted)}
+.mkv .v{font-size:13.5px;font-weight:600;margin-top:3px;word-break:break-all}
+@media(max-width:520px){.main{padding:16px 14px 48px}.toolbar{padding:13px 14px 11px;margin:0 -14px 14px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}.mgrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main class="main" id="main"><div class="loading">正在载入地图数据…</div></main>
+<div class="mask" id="mask"><div class="modal" id="modal"></div></div>
+
+<script>
+(function(){
+'use strict';
+if(window.parent!==window) document.documentElement.classList.add('embedded');
+
+/* ---------- 版本 & 图片地址 ---------- */
+const VERSIONS=[{id:'29836883',label:'29836883',tracks:'../ace/29836883/tracks.json'}];
+const DEFAULT_VER='29836883';
+/* 版本号 → 时间：版本号是「Unix 时间戳的分钟数」 */
+function verTime(id){
+  const n=Number(id);
+  if(!isFinite(n)||n<=0) return '';
+  const d=new Date(n*60000), p=v=>String(v).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function getVerParam(){
+  const p=new URLSearchParams(location.search);
+  let v=p.get('v');
+  if(!v){ try{ v=localStorage.getItem('va_ver'); }catch(e){} }
+  return VERSIONS.some(x=>x.id===v)?v:DEFAULT_VER;
+}
+let CUR_VER=getVerParam();
+function verCfg(v){ return VERSIONS.find(x=>x.id===v)||VERSIONS[0]; }
+const resolveTracksUrl=v=>verCfg(v).tracks||'tracks.json';
+
+/* 地图图片：优先仓库 images/, 失败回退本地 ace/<版本>/map/, 再失败露占位字 */
+const IMG_CDN='images/';  // 图片已并入 acewiki/images
+const imgLocal=n=>'../ace/'+CUR_VER+'/map/'+n;
+
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const initial=s=>{ s=String(s||'').trim(); if(!s) return '?'; return /[A-Za-z]/.test(s[0])?s[0].toUpperCase():s[0]; };
+
+/* 图片加载失败的统一处理：先换回退地址，再失败就移除（露出占位） */
+document.addEventListener('error',function(e){
+  const img=e.target;
+  if(!img||img.tagName!=='IMG') return;
+  const fb=img.getAttribute('data-fb');
+  if(fb){ img.removeAttribute('data-fb'); img.src=fb; }
+  else img.remove();
+},true);
+function imgTag(file,cls){
+  if(!file) return '';
+  return '<img class="'+(cls||'')+'" loading="lazy" alt="" src="'+esc(IMG_CDN+file)+'" data-fb="'+esc(imgLocal(file))+'"'+
+    ' onload="this.parentNode.classList.add(\'ok\')">';
+}
+
+/* ---------- 状态 ---------- */
+let TRACKS=[];
+let keyword='';
+let sortKey='name';
+const filters={'所在地':[],'圈数':[]};
+let openDD=null;
+const SORTS=[{k:'name',n:'名称'},{k:'id',n:'ID 小→大'},{k:'thr',n:'门槛 低→高'}];
+const GROUPS=[{key:'所在地',get:c=>c.region},{key:'圈数',get:c=>c.lapsTxt}];
+const mainEl=document.getElementById('main');
+const maskEl=document.getElementById('mask');
+const modalEl=document.getElementById('modal');
+
+/* ---------- 载入 ---------- */
+async function load(v){
+  const r=await fetch(resolveTracksUrl(v),{cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status+' · '+resolveTracksUrl(v));
+  const data=await r.json();
+  TRACKS=[];
+  Object.keys(data).forEach(function(k){
+    const rec=data[k];
+    if(!rec||typeof rec!=='object') return;
+    const laps=Array.isArray(rec['圈数'])?rec['圈数']:[];
+    TRACKS.push({
+      id:rec['数据ID'],
+      name:rec['名称']||('ID '+rec['数据ID']),
+      pc:rec['PC端名称']||'',
+      region:rec['所在地']||'',
+      laps:laps, lapsTxt:laps.join('/')||'—',
+      thr:rec['最快计时门槛'],
+      space:Array.isArray(rec['空间ID'])?rec['空间ID']:[].concat(rec['空间ID']||[]),
+      loadImg:rec['加载图资源']||'', miniImg:rec['小地图资源']||''
+    });
+  });
+  TRACKS.forEach(c=>{ c._s=(c.name+' '+c.pc+' '+c.region+' '+c.lapsTxt).toLowerCase(); });
+}
+
+/* ---------- 渲染 ---------- */
+function summary(arr){ return !arr||!arr.length?'全部':(arr.length===1?arr[0]:arr.length+' 项'); }
+function ddHtml(key,label,items,sel){
+  const open=openDD===key;
+  const sum=summary(sel);
+  const text=sum==='全部'?label:label+'：'+sum;
+  return '<div class="sel'+(open?' open':'')+'" data-dd="'+esc(key)+'">'+
+    '<button class="sel-btn" type="button"><span class="ic">'+esc(label.slice(0,1))+'</span>'+
+      '<span>'+esc(text)+'</span><span class="arrow">▼</span></button>'+
+    '<div class="sel-list">'+items.map(function(it){
+      return '<div class="opt'+(sel.indexOf(it.v)>=0?' on':'')+'" data-k="'+esc(key)+'" data-v="'+esc(it.v)+'">'+
+        '<span>'+esc(it.n)+'</span><span class="hint">'+it.c+'</span></div>';
+    }).join('')+'</div></div>';
+}
+function verHtml(){
+  const open=openDD==='__ver';
+  const t=verTime(CUR_VER);
+  const opts=VERSIONS.map(x=>{
+    const xt=verTime(x.id);
+    return '<div class="opt'+(x.id===CUR_VER?' on':'')+'" data-ver="'+esc(x.id)+'" title="'+esc(xt)+'"><span>'+esc(x.label)+'</span>'+
+      (xt?'<span class="hint">'+esc(xt.slice(0,10))+'</span>':'')+'</div>';
+  }).join('');
+  return '<div class="sel'+(open?' open':'')+'" data-dd="__ver">'+
+    '<button class="sel-btn" type="button"><span class="ic">版</span><span>版本：'+esc(CUR_VER)+(t?'<i class="vtime">'+esc(t.slice(0,10))+'</i>':'')+'</span><span class="arrow">▼</span></button>'+
+    '<div class="sel-list">'+opts+'</div></div>';
+}
+function counts(get){
+  const m={};
+  TRACKS.forEach(c=>{ const v=get(c); if(v==null||v==='')return; m[v]=(m[v]||0)+1; });
+  return Object.keys(m).sort((a,b)=>m[b]-m[a]).map(k=>({v:k,c:m[k],n:k}));
+}
+function filtered(){
+  const q=keyword.trim().toLowerCase();
+  const list=TRACKS.filter(function(c){
+    if(q&&c._s.indexOf(q)<0) return false;
+    for(let i=0;i<GROUPS.length;i++){
+      const g=GROUPS[i], sel=filters[g.key];
+      if(sel&&sel.length&&sel.indexOf(String(g.get(c)))<0) return false;
+    }
+    return true;
+  });
+  if(sortKey==='name') list.sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
+  else if(sortKey==='thr') list.sort((a,b)=>(a.thr||0)-(b.thr||0)||a.name.localeCompare(b.name,'zh-Hans-CN'));
+  else list.sort((a,b)=>(a.id||0)-(b.id||0));
+  return list;
+}
+function cardHtml(c){
+  return '<div class="track" data-id="'+esc(c.id)+'">'+
+    '<div class="pic">'+
+      '<svg class="ph-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.4-2.1V4L9 6.1 15 4l5.4 2.1V18L15 15.9 9 20z"/><path d="M9 6.1V20M15 4v11.9"/></svg>'+
+      '<span class="ph">'+esc(initial(c.region||c.name))+'</span>'+
+      imgTag(c.miniImg)+
+    '</div>'+
+    '<div class="body">'+
+      '<div class="nm">'+esc(c.name)+'</div>'+
+      '<div class="meta"><span class="tag reg">'+esc(c.region||'—')+'</span>'+
+        '<span class="tag">'+esc(c.lapsTxt)+' 圈</span></div>'+
+      '<div class="foot"><span>最快门槛</span><span><b>'+esc(c.thr==null?'—':c.thr)+'</b> s</span></div>'+
+    '</div></div>';
+}
+function render(){
+  const list=filtered();
+  const h='<div class="toolbar"><h2>地图<span class="count">'+list.length+' / '+TRACKS.length+' 张</span></h2>'+
+    '<div class="selects">'+
+      ddHtml('所在地','所在地',counts(c=>c.region),filters['所在地'])+
+      ddHtml('圈数','圈数',counts(c=>c.lapsTxt),filters['圈数'])+
+      '<div class="sel" data-kind="sort"><button class="sel-btn" type="button" data-sort="1">'+
+        '<span class="ic">排</span><span>'+esc((SORTS.find(s=>s.k===sortKey)||SORTS[0]).n)+'</span>'+
+        '<span class="arrow">▼</span></button></div>'+
+      verHtml()+
+    '</div>'+
+    '<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'+
+      '<input id="q" placeholder="搜索地图名 / 所在地…" value="'+esc(keyword)+'" autocomplete="off"></div>'+
+    '</div>'+
+    (list.length?'<div class="grid">'+list.map(cardHtml).join('')+'</div>'
+      :'<div class="empty"><div class="big">没有匹配的地图</div><div>试着放宽筛选条件，或清空搜索关键词。</div></div>');
+  mainEl.innerHTML=h;
+  bind();
+}
+function renderGrid(){
+  const g=mainEl.querySelector('.grid');
+  const list=filtered();
+  const cnt=mainEl.querySelector('.toolbar .count');
+  if(cnt) cnt.textContent=list.length+' / '+TRACKS.length+' 张';
+  if(!g){
+    if(list.length){ const t=mainEl.querySelector('.toolbar'); const d=document.createElement('div'); d.className='grid'; d.innerHTML=list.map(cardHtml).join(''); t.insertAdjacentElement('afterend',d); }
+    return;
+  }
+  g.innerHTML=list.map(cardHtml).join('');
+  const emp=mainEl.querySelector('.empty'); if(emp) emp.remove();
+}
+
+/* ---------- 详情 ---------- */
+function openDetail(c){
+  const kv=arr=>arr.filter(x=>x[1]!=null&&x[1]!=='').map(x=>'<div class="mkv"><div class="k">'+esc(x[0])+'</div><div class="v">'+esc(x[1])+'</div></div>').join('');
+  modalEl.innerHTML='<button class="mclose" type="button" aria-label="关闭">✕</button>'+
+    '<div class="mhd"><div><h3>'+esc(c.name)+'</h3><div class="sub">#'+esc(c.id)+(c.pc&&c.pc!==c.name?' · PC端「'+esc(c.pc)+'」':'')+' · '+esc(c.region||'—')+'</div></div></div>'+
+    '<div class="mpic"><span class="ph">'+esc(initial(c.region||c.name))+'</span>'+imgTag(c.loadImg||c.miniImg)+'</div>'+
+    '<div class="mgrid">'+kv([['所在地',c.region],['圈数',c.lapsTxt],['最快计时门槛',c.thr==null?'':c.thr+' s'],
+      ['空间 ID',c.space.join(', ')],['PC 端名称',c.pc],['数据 ID',c.id]])+'</div>'+
+    '<div style="margin-top:14px;font-size:11.5px;color:var(--muted)">小地图资源 <code>'+esc(c.miniImg||'—')+'</code> · 加载图 <code>'+esc(c.loadImg||'—')+'</code></div>';
+  maskEl.classList.add('open');
+  modalEl.querySelector('.mclose').onclick=closeDetail;
+}
+function closeDetail(){ maskEl.classList.remove('open'); modalEl.innerHTML=''; }
+maskEl.addEventListener('click',function(e){ if(e.target===maskEl) closeDetail(); });
+addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeDetail(); openDD=null; } });
+
+/* ---------- 事件 ---------- */
+function bind(){
+  const tb=mainEl.querySelector('.toolbar');
+  tb.addEventListener('click',function(e){
+    const sb=e.target.closest('.sel-btn');
+    if(sb){
+      const drop=sb.parentNode, key=drop.dataset.dd;
+      if(drop.dataset.kind==='sort'){
+        const i=SORTS.findIndex(s=>s.k===sortKey);
+        sortKey=SORTS[(i+1)%SORTS.length].k; render(); return;
+      }
+      const open=!drop.classList.contains('open');
+      Array.prototype.forEach.call(tb.querySelectorAll('.sel'),d=>d.classList.remove('open'));
+      openDD=open?key:null; if(open) drop.classList.add('open');
+      return;
+    }
+    const ver=e.target.closest('[data-ver]'); if(ver){ changeVer(ver.dataset.ver); return; }
+    const opt=e.target.closest('.opt');
+    if(opt){
+      const k=opt.dataset.k, v=opt.dataset.v, arr=filters[k];
+      const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v);
+      openDD=k; render(); return;
+    }
+  });
+  const q=mainEl.querySelector('#q');
+  q.addEventListener('input',function(){ keyword=this.value; renderGrid(); });
+  const grid=mainEl.querySelector('.grid');
+  if(grid) grid.addEventListener('click',function(e){
+    const card=e.target.closest('.track'); if(!card) return;
+    const c=TRACKS.find(x=>String(x.id)===card.dataset.id); if(c) openDetail(c);
+  });
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.sel')){ openDD=null; mainEl.querySelectorAll('.sel').forEach(d=>d.classList.remove('open')); }
+});
+function changeVer(v){
+  if(!VERSIONS.some(x=>x.id===v)||v===CUR_VER) return;
+  CUR_VER=v;
+  try{ localStorage.setItem('va_ver',v); }catch(e){}
+  if(window.parent!==window){ try{ window.parent.postMessage({type:'verChanged',v:v},'*'); }catch(e){} }
+  boot();
+}
+
+/* ---------- 启动 ---------- */
+async function boot(){
+  mainEl.innerHTML='<div class="loading">正在载入地图数据…</div>';
+  try{ await load(CUR_VER); render(); }
+  catch(err){ mainEl.innerHTML='<div class="empty"><div class="big">地图数据载入失败</div><div>'+esc(err.message)+'</div>'+
+    '<div style="font-size:12px">请确认通过 HTTP 访问，且 <code>ace/'+esc(CUR_VER)+'/tracks.json</code> 可访问。</div></div>'; }
+}
+boot();
+})();
+</script>
+</body>
+</html>
