@@ -555,6 +555,8 @@ function buildFilters(){
   roles=['全部'].concat(Array.from(new Set(CARS.map(c=>c.基础.定位||'').filter(Boolean))));
 }
 const SORTS=['ID 小→大','ID 大→小'];
+/* 排序偏好长久保存：上次选的排序返回/刷新后继续生效 */
+try{ const saved=localStorage.getItem('va_sort'); if(SORTS.indexOf(saved)>=0) sortBy=saved; }catch(e){}
 const SORT_ICON={'ID 小→大':'↑','ID 大→小':'↓'};
 const SORT_HINT={'ID 小→大':'升序','ID 大→小':'降序'};
 
@@ -809,6 +811,7 @@ function bindSelects(){
       btn.onclick=function(e){
         e.stopPropagation();
         sortBy=btn.dataset.next;
+        try{ localStorage.setItem('va_sort',sortBy); }catch(err){}
         renderCards();
       };
       return;
