@@ -160,6 +160,25 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .catitem .cb{display:none;padding:8px 10px}
 .catitem.open .cb{display:block}
 
+/* —— 字段级紧凑对比清单（替代 jsondiffpatch 整树渲染） —— */
+.frow{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:8px;line-height:1.5}
+.frow:hover{background:#f7f8fa}
+.frow+.frow{border-top:1px solid rgba(35,39,47,.05)}
+.fk{flex:0 0 auto;font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-2);font-weight:600;padding-top:1px;min-width:76px;white-space:nowrap}
+.fv{flex:1 1 auto;font-size:12.5px;color:var(--ink);word-break:break-word;min-width:0}
+.fpair{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.pv{font-size:12.5px}
+.pv.old{color:#b91c1c;background:var(--red-soft);border-radius:5px;padding:1px 6px;text-decoration:line-through}
+.pv.new{color:#14532d;background:var(--green-soft);border-radius:5px;padding:1px 6px}
+.arrow{color:var(--muted);font-size:12px;line-height:1.6;flex:0 0 auto}
+.ff.new{color:#14532d;background:var(--green-soft);border-radius:4px;padding:1px 5px}
+.ff.old{color:#b91c1c;background:var(--red-soft);border-radius:4px;padding:1px 5px;text-decoration:line-through}
+.ftext{font-size:12px}
+.ftext .dmp{background:none;color:inherit}
+.fgrp{margin:4px 0 2px}
+.fgt{font-size:11px;font-weight:700;color:var(--accent-ink);padding:5px 8px;background:var(--accent-soft);border-radius:6px;margin-bottom:2px}
+.fgrp>.frow:first-child,.fgrp .fgrp{margin-left:10px;border-left:1px dashed rgba(35,39,47,.12);padding-left:8px}
+
 /* jsondiffpatch 自带样式微调 */
 .jsondiffpatch-delta{margin:0}.jsondiffpatch-node{list-style:none;margin:0;padding:0}
 .jsondiffpatch-node ul{list-style:none;margin:0;padding:0;padding-left:16px;border-left:1px dashed rgba(35,39,47,.09)}
@@ -448,7 +467,7 @@ function bindCards(cards){
               ci.classList.toggle('open',o);
               if(o&&!cb.getAttribute('data-rendered')){
                 cb.innerHTML='<div class="loading" style="padding:10px"><div class="spin"></div></div>';
-                cb.innerHTML=htmlFmt(cats[Number(ch.getAttribute('data-ii'))].delta,cats[Number(ch.getAttribute('data-ii'))].left);
+                cb.innerHTML=renderLeafDelta(cats[Number(ch.getAttribute('data-ii'))].delta);
                 cb.setAttribute('data-rendered','1');
               }
             });
@@ -484,6 +503,116 @@ function buildCats(item){
   });
   out.sort(function(a,b){var i=CAT_PRIO.indexOf(a.cat),j=CAT_PRIO.indexOf(b.cat);return (i<0?99:i)-(j<0?99:j);});
   return out;
+}
+
+/* ============================================================
+   字段级紧凑渲染器：只遍历 delta 里真正变化的叶子，
+   不用 jsondiffpatch 的老式整树渲染（会把未变字段也铺开）。
+   ============================================================ */
+var esc2=esc;
+function fval(v){
+  if(v===null||v===undefined) return '';
+  if(typeof v==='string') return v;
+  try{ return JSON.stringify(v); }catch(e){ return String(v); }
+}
+function trunc(s,n){ s=String(s); return s.length>n ? s.slice(0,n)+'…' : s; }
+function fcell(v,kind){
+  var t=esc2(fval(v));
+  if(kind==='del') return '<span class="ff old">'+truncLine(t)+'</span>';
+  if(kind==='add') return '<span class="ff new">'+truncLine(t)+'</span>';
+  return '<span class="ff">'+truncLine(t)+'</span>';
+}
+function truncLine(t){ return t; }
+function textDiffHtml(a,b){
+  // 字符级 diff(文本)
+  try{
+    dmp.diff_main(a,b);
+    var html=dmp.diff_prettyHtml(dmp.diff_main(a,b));
+    return html;
+  }catch(e){ return '<span class="ff old">'+esc2(a)+'</span>'; }
+}
+/* 单条叶子变化的渲染：修改/新增/删除 顶端探测 */
+function isTextPair(d){ return Array.isArray(d)&&d.length===3&&d[0]===undefined&&d[1]===undefined; }
+function renderDelta(d,path){
+  if(!d) return '';
+  var html='';
+  /* —— 数组(jsondiffpatch: 对象 + _t:'a') —— */
+  if(typeof d==='object'&&d._t==='a'){
+    var keys=Object.keys(d).filter(function(k){return k!=='_t';});
+    keys.sort(function(a,b){return (Number(a)||0)-(Number(b)||0);});
+    html=keys.map(function(idx){
+      return renderArrayEntry(idx,d[idx],path);
+    }).join('');
+    return html;
+  }
+  /* —— 文本 diff —— */
+  if(isTextPair(d)){
+    return '<div class="frow"><div class="fk">'+esc2(path)+'</div><div class="fv ftext">'+textDiffHtml(d[2][0]||'',null)+'</div></div>';
+  }
+  /* —— [旧,新] 修改 —— */
+  if(Array.isArray(d)&&d.length>=2&&(d[0]!==undefined||d[1]!==undefined)){
+    var oldV=d[0],newV=d[1];
+    var isArrOld=Array.isArray(oldV), isArrNew=Array.isArray(newV);
+    if(isArrOld||isArrNew||isLongText(oldV,newV)){
+      // 复杂值或长文本 → 用全文 diff 或双格
+      return '<div class="frow"><div class="fk">'+esc2(path)+'</div><div class="fv fpair">'+
+        '<span class="pv old">'+esc2(trunc(fval(oldV),160))+'</span><span class="arrow">→</span>'+
+        '<span class="pv new">'+esc2(trunc(fval(newV),160))+'</span></div></div>';
+    }
+    return '<div class="frow"><div class="fk">'+esc2(path)+'</div><div class="fv fpair">'+
+      '<span class="pv old">'+esc2(fval(oldV))+'</span><span class="arrow">→</span>'+
+      '<span class="pv new">'+esc2(fval(newV))+'</span></div></div>';
+  }
+  /* —— 数组元素：可能是 [新] 新增(长度1) 或 嵌套delta对象/数组 —— */
+  if(Array.isArray(d)&&d.length===1){
+    return '<div class="frow"><div class="fk">'+esc2(path)+'</div><div class="fv">'+fcell(d[0],'add')+'</div></div>';
+  }
+  /* —— 对象子 delta：递归，字段名缩进 —— */
+  if(typeof d==='object'){
+    var rows=Object.keys(d).map(function(k){
+      var sub=d[k];
+      var subPath=path?path+'.'+k:k;
+      if(isLeafChange(sub)) return rowForLeaf(subPath,sub);
+      return '<div class="fgrp"><div class="fgt">'+esc2(k)+'</div>'+renderDelta(sub,subPath)+'</div>';
+    }).join('');
+    // 去根空
+    return rows;
+  }
+  return '';
+}
+function isLongText(a,b){ return (typeof a==='string'&&a.length>200)||(typeof b==='string'&&b.length>200); }
+function isLeafChange(d){
+  if(!d||typeof d!=='object') return false;
+  if(d._t) return false;
+  if(Array.isArray(d)) return d.length<=2;   // [新]/[旧,新]/[,,text]
+  return false;
+}
+function rowForLeaf(path,d){
+  var html='<div class="frow"><div class="fk">'+esc2(path)+'</div>';
+  if(isTextPair(d)){ html+='<div class="fv ftext">'+textDiffHtml(d[2][0]||'',null)+'</div>'; }
+  else if(Array.isArray(d)&&d.length===1){ html+='<div class="fv">'+fcell(d[0],'add')+'</div>'; }
+  else if(Array.isArray(d)&&d.length===2){ html+='<div class="fv fpair"><span class="pv old">'+esc2(fval(d[0]))+'</span><span class="arrow">→</span><span class="pv new">'+esc2(fval(d[1]))+'</span></div>'; }
+  else { html+='<div class="fv">'+esc2(fval(d[0]))+'</div>'; }
+  return html+'</div>';
+}
+/* 数组条目的渲染：d 可能是 [新] / [旧,0,0]删除 / [旧,新] / 子对象delta / 移动 */
+function renderArrayEntry(idx,d,path){
+  var p=path+('['+idx+']');
+  if(!d||typeof d!=='object'){ return '<div class="frow"><div class="fk">'+esc2(p)+'</div><div class="fv">'+fcell(d,'add')+'</div></div>'; }
+  if(isTextPair(d)){ return '<div class="frow"><div class="fk">'+esc2(p)+'</div><div class="fv ftext">'+textDiffHtml(d[2][0]||'',null)+'</div></div>'; }
+  // 删除: [旧,0,0] 或 [旧] with 0 marker
+  if(Array.isArray(d)&&d.length>=2&&d[1]===0){ return '<div class="frow"><div class="fk">'+esc2(p)+'</div><div class="fv">'+fcell(d[0],'del')+'</div></div>'; }
+  // 新增: [新] 长度1
+  if(Array.isArray(d)&&d.length===1){ return '<div class="frow"><div class="fk">'+esc2(p)+'</div><div class="fv">'+fcell(d[0],'add')+'</div></div>'; }
+  // 修改: [旧,新] 长度2
+  if(Array.isArray(d)&&d.length===2){ return '<div class="frow"><div class="fk">'+esc2(p)+'</div><div class="fv fpair"><span class="pv old">'+esc2(fval(d[0]))+'</span><span class="arrow">→</span><span class="pv new">'+esc2(fval(d[1]))+'</span></div></div>'; }
+  // 子对象/数组 delta
+  return '<div class="fgrp"><div class="fgt">'+esc2(p)+'</div>'+renderDelta(d,p)+'</div>';
+}
+function renderLeafDelta(delta){
+  var h=renderDelta(delta,'');
+  // 去掉外层的无效空容器
+  return h;
 }
 function catName(c){return CAT_NAMES[c]||c;}
 
