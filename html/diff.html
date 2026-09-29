@@ -146,6 +146,14 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .jsondiffpatch-value pre{white-space:pre-wrap;word-break:break-word;background:#f6f7f9;border-radius:6px;padding:4px 8px;font-family:inherit;font-size:12px;margin:2px 0}
 .jsondiffpatch-left-value pre{background:var(--red-soft);color:#b91c1c}
 .jsondiffpatch-right-value pre{background:var(--green-soft);color:#14532d}
+/* 纯新增/删除的值节点（如数组内新增元素）原本无底色，补齐高亮 */
+.jsondiffpatch-added pre{background:var(--green-soft);color:#14532d;border:1px solid rgba(22,163,74,.35)}
+.jsondiffpatch-added .jsondiffpatch-property-name{color:var(--green);font-weight:700}
+.jsondiffpatch-added::marker,.jsondiffpatch-added .jsondiffpatch-value{font-weight:600}
+.jsondiffpatch-deleted pre{background:var(--red-soft);color:#b91c1c;text-decoration:line-through;border:1px solid rgba(220,38,38,.3)}
+.jsondiffpatch-deleted .jsondiffpatch-property-name{color:var(--red);font-weight:700}
+.jsondiffpatch-added{border-left:2px solid var(--green)}
+.jsondiffpatch-deleted{border-left:2px solid var(--red)}
 .jsondiffpatch-textdiff{list-style:none;margin:4px 0;padding:0;font-family:ui-monospace,monospace;font-size:11px}
 .jsondiffpatch-textdiff > li{margin:3px 0}
 .jsondiffpatch-textdiff-line-number,.jsondiffpatch-textdiff-char{display:inline-block;color:var(--muted);margin-right:6px}
