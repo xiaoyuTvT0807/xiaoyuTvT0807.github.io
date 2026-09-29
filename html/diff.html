@@ -232,6 +232,7 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
       <span class="gap" style="color:var(--muted);font-size:13px;padding:0 2px">→</span>
       <div class="sel" id="selB"></div>
       <button class="run-btn" id="goBtn">开始对比</button>
+      <button class="run-btn" id="freshBtn" title="跳转 ?fresh=1：所有数据请求绕过缓存，强制回源拿最新" style="--accent:#dc2626">强制刷新</button>
     </div>
   </div>
   <div class="typebar" id="typeBar"></div>
@@ -269,11 +270,13 @@ var FILES=[
 var _fetch=(window.AceDataCache&&AceDataCache.fetchData)||fetch;
 function dataUrl(ver,f){ return '../ace/'+ver+'/'+f; }
 
-/* jsondiffpatch 实例：按 id 匹配对象，长文本走字符级 diff */
+/* jsondiffpatch 实例：按 id 匹配对象。
+   关闭 textDiff：默认开启会在长文本（如技能描述）上输出 @@…%E5… 这类 URL 编码串，
+   难读。这里显式禁用它，长文本一律走 [旧,新] 双格 + 截断折叠，更直观。 */
 var JDP=new jdpCreate({
+  textDiff:false,
   objectHash:function(obj,i){ return (obj&&obj.id)||(obj&&obj['编号'])||(obj&&obj['id'])||(((obj&&obj['车辆档案']&&obj['车辆档案']['基础'])?obj['车辆档案']['基础']['名称']:null))||('i'+i); },
-  arrays:{detectMove:true, includeValueOnMove:false},
-  textDiff:{diffMatchPatch:dmp, minLength:30}
+  arrays:{detectMove:true, includeValueOnMove:false}
 });
 
 /* ---------- 自定义下拉 ---------- */
@@ -658,6 +661,13 @@ function renderTypeBar(){
 function rerun(){document.getElementById('goBtn').disabled=false;if(curSel===0)renderAll();else renderOne(curSel-1);}
 
 document.getElementById('goBtn').addEventListener('click',rerun);
+
+/* 强制刷新：跳转 ?fresh=1（新 URL 绕过浏览器 HTTP 缓存；
+   preload.js 检测到 fresh 后所有 fetch 走 cache:'no-store'，强制回源拿最新） */
+document.getElementById('freshBtn').addEventListener('click',function(){
+  var btn=this;btn.disabled=true;btn.textContent='刷新中…';
+  location.href=location.pathname+'?fresh=1';
+});
 renderTypeBar();
 renderOne(0);
 })();
