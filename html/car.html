@@ -197,8 +197,8 @@ video{width:100%;border-radius:var(--radius-sm);margin-top:12px;background:#000;
 .node.sub{border-left-color:var(--line-2);margin-left:12px}
 
 /* ---------- 芯片 ---------- */
-.chips-shapes{display:flex;flex-wrap:wrap;gap:10px}
-.shape{text-align:center;width:56px}
+.chips-shapes{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto}
+.shape{text-align:center;width:56px;flex-shrink:0}
 .shape svg{width:28px;height:28px;fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.4}
 .shape .lb{font-size:10.5px;color:var(--muted);margin-top:2px}
 

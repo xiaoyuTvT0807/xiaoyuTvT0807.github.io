@@ -300,8 +300,8 @@ html.embedded .sel[data-kind="ver"]{display:none}
   .kv{grid-template-columns:1fr;gap:2px 0}
   .kv .k{max-width:none;font-weight:600;margin-top:4px}
 }
-.chips-shapes{display:flex;gap:8px;flex-wrap:wrap}
-.shape{width:60px;padding:7px 4px 5px;border-radius:var(--radius-sm);background:var(--surface-2);
+.chips-shapes{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto}
+.shape{width:60px;flex-shrink:0;padding:7px 4px 5px;border-radius:var(--radius-sm);background:var(--surface-2);
   border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px}
 .shape svg{width:26px;height:26px;stroke:var(--accent-ink);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .shape .lb{font-size:10.5px;color:var(--muted)}
