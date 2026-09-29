@@ -137,6 +137,29 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .moditem .ar{color:var(--muted);font-size:9px;transition:transform .2s}
 .moditem.open .ar{transform:rotate(90deg)}
 
+/* 车辆修改卡片（图片+名字，点击展开分类） */
+.vcard{border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;background:#fff;box-shadow:var(--sh-1)}
+.vh{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;user-select:none;transition:background .15s}
+.vh:hover{background:#f7f8fa}
+.vh .vi{width:46px;height:46px;flex:0 0 46px;border-radius:9px;object-fit:cover;background:#f1f2f5;border:1px solid var(--line)}
+.vh .vt{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.vh .vt b{font-size:13.5px;color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vh .vt i{font-size:11px;color:var(--muted);font-style:normal}
+.vh .fcount{margin-left:auto;font-size:11px;color:var(--amber);background:var(--amber-soft);padding:2px 9px;border-radius:999px;font-weight:700;white-space:nowrap}
+.vh .ar{color:var(--muted);font-size:10px;transition:transform .2s}
+.vcard.open .vh .ar{transform:rotate(90deg)}
+.vb{display:none;padding:6px 12px 14px;border-top:1px solid var(--line);background:#fbfbfd}
+.vcard.open .vb{display:block;animation:fadeIn .18s ease}
+/* 分类折叠 */
+.catitem{border:1px solid var(--line);border-radius:var(--radius-sm);margin-top:8px;overflow:hidden;background:#fff}
+.catitem .ch{display:flex;align-items:center;gap:8px;padding:8px 13px;cursor:pointer;background:#fff;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:600}
+.catitem .ch:hover{background:#f7f8fa}
+.catitem .ch .n{margin-left:auto;font-size:10.5px;color:var(--amber);background:var(--amber-soft);padding:1px 7px;border-radius:999px;font-weight:700}
+.catitem .ch .ar{color:var(--muted);font-size:9px;transition:transform .2s}
+.catitem.open .ch .ar{transform:rotate(90deg)}
+.catitem .cb{display:none;padding:8px 10px}
+.catitem.open .cb{display:block}
+
 /* jsondiffpatch 自带样式微调 */
 .jsondiffpatch-delta{margin:0}.jsondiffpatch-node{list-style:none;margin:0;padding:0}
 .jsondiffpatch-node ul{list-style:none;margin:0;padding:0;padding-left:16px;border-left:1px dashed rgba(35,39,47,.09)}
@@ -338,10 +361,12 @@ function cardHtml(cfg,res,cardIdx){
       body+='<div class="group mod"><div class="glab">修改 '+modified.length+'</div><div class="modlist">'+
         modified.map(function(x,idx){
           var n=countLeaf(x.delta);
-          return '<div class="moditem"><div class="mh" data-ic="'+cardIdx+'" data-ii="'+idx+'"><span class="id">'+esc(x.key)+'</span>'+
-            '<span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span>'+
+          return '<div class="vcard"><div class="vh" data-ic="'+cardIdx+'" data-ii="'+idx+'">'+
+            '<img class="vi" src="images/'+encodeURIComponent(x.key)+'_m.png" onerror="this.style.visibility=`hidden`" alt="">'+
+            '<div class="vt"><b title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</b>'+
+            '<i>ID '+esc(x.key)+'</i></div>'+
             '<span class="fcount">'+n+' 处变化</span><span class="ar">▶</span></div>'+
-            '<div class="mb"></div></div>';
+            '<div class="vb"><div class="vdl"></div></div></div>';
         }).join('')+
       '</div></div>';
     }
@@ -401,21 +426,66 @@ function bindCards(cards){
   body.querySelectorAll('.fhd').forEach(function(hd){
     hd.addEventListener('click',function(){var c=hd.closest('.fcard');if(c)c.classList.toggle('open');});
   });
-  body.querySelectorAll('.moditem .mh').forEach(function(mh){
-    var ic=Number(mh.getAttribute('data-ic')),ii=Number(mh.getAttribute('data-ii'));
+  body.querySelectorAll('.vcard .vh').forEach(function(vh){
+    var ic=Number(vh.getAttribute('data-ic')),ii=Number(vh.getAttribute('data-ii'));
     var res=(cards[ic]||{}).res||{};
-    mh.addEventListener('click',function(){
-      var mi=mh.closest('.moditem'),mb=mi.querySelector('.mb');
-      var open=!mi.classList.contains('open');
-      mi.classList.toggle('open',open);
-      if(open&&!mb.getAttribute('data-rendered')){
-        mb.innerHTML='<div class="loading" style="padding:16px"><div class="spin"></div></div>';
-        mb.innerHTML=modHtml(res.modified[ii],false);
-        mb.setAttribute('data-rendered','1');
+    vh.addEventListener('click',function(){
+      var vc=vh.closest('.vcard'),vdl=vc.querySelector('.vdl');
+      var open=!vc.classList.contains('open');
+      vc.classList.toggle('open',open);
+      if(open&&!vdl.getAttribute('data-rendered')){
+        vdl.innerHTML='<div class="loading" style="padding:12px"><div class="spin"></div></div>';
+        var cats=buildCats(res.modified[ii]);
+        if(!cats.length){vdl.innerHTML='<div style="padding:12px;color:var(--muted);font-size:12px">无可分类的变化</div>';}
+        else{
+          vdl.innerHTML=cats.map(function(c,i){
+            return '<div class="catitem"><div class="ch" data-ii="'+i+'"><span>'+esc(catName(c.cat))+'</span><span class="n">'+c.count+' 处</span><span class="ar">▶</span></div><div class="cb"></div></div>';
+          }).join('');
+          vdl.querySelectorAll('.catitem .ch').forEach(function(ch){
+            var ci=ch.closest('.catitem'),cb=ci.querySelector('.cb');
+            ch.addEventListener('click',function(){
+              var o=!ci.classList.contains('open');
+              ci.classList.toggle('open',o);
+              if(o&&!cb.getAttribute('data-rendered')){
+                cb.innerHTML='<div class="loading" style="padding:10px"><div class="spin"></div></div>';
+                cb.innerHTML=htmlFmt(cats[Number(ch.getAttribute('data-ii'))].delta,cats[Number(ch.getAttribute('data-ii'))].left);
+                cb.setAttribute('data-rendered','1');
+              }
+            });
+          });
+        }
+        vdl.setAttribute('data-rendered','1');
       }
     });
   });
 }
+/* —— 修改分类辅助：把一条记录按「一级分类」分组，只保留有变化且按优先级排序 —— */
+var CAT_CONTAINERS=['车辆档案','芯片档案'];           // 优先进入这些容器内取一级分类
+var CAT_PRIO=['基础','核心性能','氮气','大招','SP技能','被动','RELATION','芯片','车辆皮肤','故事','车辆缩略图'];
+var CAT_NAMES={'RELATION':'克制关系','核心性能':'核心性能','SP技能':'SP技能','车辆缩略图':'缩略图'};
+function listCats(rec){
+  if(!rec||typeof rec!=='object')return [];
+  for(var i=0;i<CAT_CONTAINERS.length;i++){var c=rec[CAT_CONTAINERS[i]];
+    if(c&&typeof c==='object'&&!Array.isArray(c)&&Object.keys(c).length)return Object.keys(c);}
+  return Object.keys(rec);
+}
+function catVal(rec,cat){
+  if(!rec||typeof rec!=='object')return undefined;
+  for(var i=0;i<CAT_CONTAINERS.length;i++){var c=rec[CAT_CONTAINERS[i]];if(c&&cat in c)return c[cat];}
+  return rec[cat];
+}
+function buildCats(item){
+  var l=item.left,r=item.right,seen={},cats=[];
+  listCats(l).concat(listCats(r)).forEach(function(c){if(!seen[c]){seen[c]=1;cats.push(c);}});
+  var out=[];
+  cats.forEach(function(cat){
+    var d;try{d=JDP.diff(catVal(l,cat),catVal(r,cat));}catch(e){d=undefined;}
+    if(d){var n=countLeaf(d);if(n>0)out.push({cat:cat,delta:d,count:n,left:catVal(l,cat)});}
+  });
+  out.sort(function(a,b){var i=CAT_PRIO.indexOf(a.cat),j=CAT_PRIO.indexOf(b.cat);return (i<0?99:i)-(j<0?99:j);});
+  return out;
+}
+function catName(c){return CAT_NAMES[c]||c;}
 
 function setLoading(txt){bodyEl().innerHTML='<div class="loading"><div class="spin"></div><div>'+txt+'</div></div>';}
 
