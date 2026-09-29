@@ -398,6 +398,7 @@ video{display:block;width:100%;max-width:460px;aspect-ratio:16/9;background:#1b1
     <iframe id="view" src="list.html" title="内容区"></iframe>
   </main>
 
+<script src="assets/preload.js"></script>
 <script>
 /* ============================================================
    index = 外壳 + 主目录（常驻最上层，永远不变）
@@ -590,6 +591,12 @@ function setNav(open){document.body.classList.toggle('nav-open',open);}
 navToggle.onclick=function(){setNav(!document.body.classList.contains('nav-open'));};
 navMask.onclick=function(){setNav(false);};
 addEventListener('keydown',function(e){if(e.key==='Escape')setNav(false);});
+
+/* ===== 打开网站即后台预取全部版本的数据，预览秒开 ===== */
+if(window.AceDataCache){
+  var _pre=(window.requestIdleCallback||function(fn){return setTimeout(fn,50)});
+  _pre(function(){ AceDataCache.preloadAll(); });
+}
 </script>
 </body>
 </html>

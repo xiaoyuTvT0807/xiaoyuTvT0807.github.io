@@ -144,7 +144,8 @@ const filters={};
 const hueOf=k=>{k=String(k||'');if(k.indexOf('常驻')>=0)return 268;const m=k.match(/(\d+)/);return m?(Number(m[1])*47+18)%360:210};
 
 async function load(){
-  const r=await fetch(dataUrl(MOD.file),{cache:'no-store'});
+  const _fetch=(window.AceDataCache&&AceDataCache.fetchData)||fetch;
+  const r=await _fetch(dataUrl(MOD.file));
   if(!r.ok) throw new Error('HTTP '+r.status+' · '+MOD.file);
   const data=await r.json();
   RAW=Array.isArray(data)?data:Object.keys(data).map(k=>data[k]);
@@ -152,7 +153,7 @@ async function load(){
   if(MOD.aux){
     await Promise.all(MOD.aux.map(async function(f){
       try{
-        const rr=await fetch(dataUrl(f),{cache:'no-store'});
+        const rr=await _fetch(dataUrl(f));
         AUX[f]=rr.ok?await rr.json():null;
       }catch(e){ AUX[f]=null; }
     }));
