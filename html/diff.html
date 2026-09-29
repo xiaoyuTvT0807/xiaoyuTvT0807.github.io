@@ -11,6 +11,8 @@
   --line:rgba(35,39,47,0.08);--line-2:rgba(35,39,47,0.13);
   --accent:#6d5efc;--accent-ink:#5a45f5;--accent-soft:rgba(109,94,252,0.10);
   --green:#16a34a;--green-soft:rgba(22,163,74,.10);
+  --red:#dc2626;--red-soft:rgba(220,38,38,.08);
+  --amber:#d97706;--amber-soft:rgba(217,119,6,.10);
   --radius:16px;--radius-sm:10px;
   --sh-1:0 1px 2px rgba(35,39,47,.04),0 1px 3px rgba(35,39,47,.05);
   --sh-2:0 10px 28px rgba(35,39,47,.10),0 2px 6px rgba(35,39,47,.05);
@@ -34,7 +36,6 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .toolbar h2{font-size:18px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:baseline;gap:7px;flex:0 0 auto;white-space:nowrap}
 .toolbar .count{font-size:11px;font-weight:500;color:var(--muted);background:#eceef3;padding:2px 7px;border-radius:999px;white-space:nowrap}
 .selects{display:flex;gap:7px;flex-wrap:wrap;align-items:center;flex:1 1 auto;min-width:0}
-/* 自定义下拉（与全站 .sel 同款） */
 .sel{position:relative;min-width:150px;flex:0 0 auto}
 .sel-btn{display:flex;align-items:center;gap:7px;width:100%;padding:7px 11px;border-radius:var(--radius-sm);
   font-size:12.5px;cursor:pointer;user-select:none;background:#fff;border:1px solid var(--line-2);color:var(--ink-2);
@@ -44,7 +45,7 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
   background:rgba(35,39,47,.06);color:var(--ink-2);font-size:10px;font-weight:700;line-height:1;transition:.15s}
 .sel-btn:hover .ic{background:var(--accent-soft);color:var(--accent-ink)}
 .sel-btn .txt{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;min-width:0}
-.sel-btn .txt b{font-size:12.5px;color:var(--ink);font-weight:600}
+.sel-btn .txt b{font-size:12.5px;color:var(--ink);font-weight:600;letter-spacing:.02em}
 .sel-btn .txt i{font-size:10px;color:var(--muted);font-weight:400;font-style:normal;white-space:nowrap}
 .sel-btn .arrow{font-size:8px;color:var(--muted);margin-left:auto;transition:transform .2s ease;line-height:1}
 .sel.open .sel-btn{border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -60,47 +61,89 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .sel-list .opt.on{color:var(--accent-ink);font-weight:600}
 .sel-list .opt.on::after{content:"✓";margin-left:auto;font-size:11px}
 .sel-list .opt .hint{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:400}
-.sel .gap{font-size:12px;color:var(--muted);padding:0 0}
 .run-btn{flex:0 0 auto;padding:8px 18px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;
   font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(109,94,252,.3);transition:.15s;white-space:nowrap}
 .run-btn:hover{filter:brightness(1.06)}
 .run-btn:disabled{opacity:.5;cursor:default}
 
 /* ---------- 汇总 ---------- */
-.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.sumcard{padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:4px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
+.sumcard{padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:5px}
 .sumcard .lab{font-size:12px;color:var(--muted);font-weight:500}
-.sumcard .val{font-size:26px;font-weight:800;letter-spacing:-.02em}
-.sumcard .val b{font-weight:800}
-.sumcard .val .vs{font-size:14px;color:var(--muted);font-weight:600;margin:0 4px}
-.sumcard.add{background:linear-gradient(180deg,#fff, #fbfdfc)}
-.sumcard .val.add{color:var(--green)}
-.sumcard .sub{font-size:11.5px;color:var(--muted)}
+.sumcard .val{font-size:26px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:baseline;gap:2px}
+.sumcard .val .unit{font-size:13px;color:var(--muted);font-weight:600}
+.sumcard.add .val{color:var(--green)}
+.sumcard.del .val{color:var(--red)}
+.sumcard.mod .val{color:var(--amber)}
+.sumcard.total .val{color:var(--accent-ink)}
+.sumcard .sub{font-size:11px;color:var(--muted)}
 
 /* ---------- 文件卡片 ---------- */
 .fcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s}
-.fhd{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none;transition:background .15s}
+.fhd{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none;transition:background .15s;flex-wrap:wrap}
 .fhd:hover{background:#f7f8fa}
 .fhd .t{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .fhd .t .emu{font-size:11px;color:var(--muted);background:#f1f2f5;padding:2px 7px;border-radius:6px;font-weight:500;font-family:ui-monospace,monospace}
+.fhd .tags{display:flex;gap:6px;align-items:center}
 .fhd .tag{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:700;white-space:nowrap}
-.fhd .tag.add{background:var(--green-soft);color:var(--green)}
 .fhd .tag.none{background:#f1f2f5;color:var(--muted)}
+.fhd .tag.add{background:var(--green-soft);color:var(--green)}
+.fhd .tag.del{background:var(--red-soft);color:var(--red)}
+.fhd .tag.mod{background:var(--amber-soft);color:var(--amber)}
+.fhd .ctl{margin-left:auto;display:flex;align-items:center;gap:12px}
 .fhd .ct{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .fhd .ct b{font-weight:700;color:var(--ink-2)}
 .fhd .ct .arr{color:var(--muted);font-size:10px}
-.fhd .ctl{margin-left:auto;display:flex;align-items:center;gap:12px}
 .fhd .ar{color:var(--muted);font-size:10px;transition:transform .2s}
 .fcard.open .fhd .ar{transform:rotate(90deg)}
-.fbd{display:none;padding:4px 18px 18px}
+.fbd{display:none;padding:6px 18px 18px}
 .fcard.open .fbd{display:block;animation:fadeIn .18s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ---------- 变更分组 ---------- */
+.group{margin:10px 0}
+.group .glab{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.group .glab::after{content:"";flex:1;height:1px;background:var(--line)}
+.group.add .glab{color:var(--green)}
+.group.del .glab{color:var(--red)}
+.group.mod .glab{color:var(--amber)}
 
 .newlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
 .nrow{display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fbfbfd;min-width:0}
 .nrow .id{font-family:ui-monospace,monospace;font-size:11px;color:var(--green);background:var(--green-soft);padding:2px 7px;border-radius:6px;font-weight:700;flex:0 0 auto}
+.nrow.del .id{color:var(--red);background:var(--red-soft)}
 .nrow .nm{font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.nrow .em{font-size:10.5px;color:var(--muted);margin-left:auto;flex:0 0 auto}
+.nrow.del .nm{text-decoration:line-through;color:var(--muted)}
+
+/* jsondiffpatch 修改明细 */
+.modlist{margin-top:2px}
+.moditem{border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;background:#fbfbfd}
+.moditem .mh{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;background:#fff;border-bottom:1px solid var(--line)}
+.moditem .mh:hover{background:#f7f8fa}
+.moditem .mh .id{font-family:ui-monospace,monospace;font-size:11px;color:var(--amber);background:var(--amber-soft);padding:2px 7px;border-radius:6px;font-weight:700;flex:0 0 auto}
+.moditem .mh .nm{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.moditem .mh .fcount{margin-left:auto;font-size:10.5px;color:var(--muted)}
+.moditem .mb{display:none;padding:10px 12px}
+.moditem.open .mb{display:block}
+.moditem .ar{color:var(--muted);font-size:9px;transition:transform .2s}
+.moditem.open .ar{transform:rotate(90deg)}
+
+/* jsondiffpatch 自带样式微调 */
+.jsondiffpatch-delta{margin:0}.jsondiffpatch-node{list-style:none;margin:0;padding:0}
+.jsondiffpatch-node ul{list-style:none;margin:0;padding:0;padding-left:16px;border-left:1px dashed rgba(35,39,47,.09)}
+.jsondiffpatch-property-name{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-2);margin:4px 0 2px}
+.jsondiffpatch-property-name::after{content:":";margin-right:4px}
+.jsondiffpatch-value{font-size:12.5px;color:var(--ink)}
+.jsondiffpatch-value pre{white-space:pre-wrap;word-break:break-word;background:#f6f7f9;border-radius:6px;padding:4px 8px;font-family:inherit;font-size:12px;margin:2px 0}
+.jsondiffpatch-left-value pre{background:var(--red-soft);color:#b91c1c}
+.jsondiffpatch-right-value pre{background:var(--green-soft);color:#14532d}
+.jsondiffpatch-textdiff{list-style:none;margin:4px 0;padding:0;font-family:ui-monospace,monospace;font-size:11px}
+.jsondiffpatch-textdiff > li{margin:3px 0}
+.jsondiffpatch-textdiff-line-number,.jsondiffpatch-textdiff-char{display:inline-block;color:var(--muted);margin-right:6px}
+.jsondiffpatch-textdiff-added{color:#fff;background:var(--green);border-radius:3px;padding:0 3px}
+.jsondiffpatch-textdiff-deleted{background:var(--red-soft);color:#b91c1c;border-radius:3px;padding:0 3px;text-decoration:line-through}
+.jsondiffpatch-moved-destination{font-size:11px;color:var(--muted)}
+.jsondiffpatch-error{color:#b91c1c;font-size:12px;padding:4px 8px;background:var(--red-soft);border-radius:6px;white-space:pre-wrap}
 
 /* ---------- 状态 ---------- */
 .loading,.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:52px 20px;color:var(--ink-2);text-align:center;
@@ -111,16 +154,12 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .empty .err{font-size:12px;color:var(--muted);max-width:520px;word-break:break-all}
 .errbox{background:rgba(220,38,38,.06);color:#b91c1c;border:1px solid rgba(220,38,38,.18);padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin:8px 0 0;word-break:break-all}
 
-.progress{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}
-.pbar{width:150px;height:6px;border-radius:3px;background:#eceef3;overflow:hidden}
-.pbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .2s}
-
 @media (max-width:760px){
   .main{padding:0 14px 48px}
   .toolbar{padding:13px 14px 12px;margin:0 -14px 14px;gap:8px}
   .selects{width:100%}
   .sel{min-width:130px;flex:1 1 calc(50% - 4px)}
-  .summary{grid-template-columns:repeat(3,1fr);gap:8px}
+  .summary{grid-template-columns:repeat(2,1fr);gap:8px}
   .sumcard{padding:13px 14px}.sumcard .val{font-size:20px}
 }
 </style>
@@ -139,12 +178,11 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
   <div id="body"></div>
 </main>
 
-<script src="assets/preload.js"></script>
-<script>
+<script type="module">
+import{D as jdpCreate, d as dmp, f as htmlFmt}from'./assets/vendor-diff.js';
+
 (function(){
 'use strict';
-if(window.parent!==window) document.documentElement.classList.add('embedded');
-
 var VERSIONS=[
   {id:'29836883',label:'29836883'},
   {id:'29842023',label:'29842023'}
@@ -154,7 +192,7 @@ function getDef(){ try{ return localStorage.getItem('va_ver')||DEFAULT_VER; }cat
 function verTime(id){ var n=Number(id); if(!isFinite(n)||n<=0)return ''; var d=new Date(n*60000),p=function(v){return String(v).padStart(2,'0')}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);}); }
 
-/* 数据文件定义：fileName + 中文名 + 提取新增条目可读名称 */
+/* 数据文件定义 + 提取可读名称（用于新增/删除列表） */
 var FILES=[
   {file:'vehicles.json',title:'车辆',emu:'vehicles',getName:function(r){var g=r['车辆档案']||r;return g&&g['基础']?g['基础']['名称']:null;}},
   {file:'tracks.json',title:'地图',emu:'tracks',getName:function(r){return r&&r['名称'];}},
@@ -168,18 +206,22 @@ var FILES=[
   {file:'balance_updates.json',title:'平衡性更新',emu:'balance',getName:function(r){var t=r&&r['标题'];return (t&&t[0])||(r&&r['版本号'])||null;}}
 ];
 
-/* 用与 list.html 完全一致的缓存优先读取，相对路径 ../ace/ */
 var _fetch=(window.AceDataCache&&AceDataCache.fetchData)||fetch;
 function dataUrl(ver,f){ return '../ace/'+ver+'/'+f; }
 
-/* ---------- 自定义下拉（dropdown，全站同款交互） ---------- */
-function buildSel(rootId, opts, cur){
-  var root=document.getElementById(rootId), open=false, val=cur;
+/* jsondiffpatch 实例：按 id 匹配对象，长文本走字符级 diff */
+var JDP=new jdpCreate({
+  objectHash:function(obj,i){ return (obj&&obj.id)||(obj&&obj['编号'])||(obj&&obj['id'])||(((obj&&obj['车辆档案']&&obj['车辆档案']['基础'])?obj['车辆档案']['基础']['名称']:null))||('i'+i); },
+  arrays:{detectMove:true, includeValueOnMove:false},
+  textDiff:{diffMatchPatch:dmp, minLength:30}
+});
+
+/* ---------- 自定义下拉 ---------- */
+function buildSel(rootId,opts,cur){
+  var root=document.getElementById(rootId),open=false,val=cur,onSelFn=function(){};
   function render(){
-    var curOpt=opts.find(function(o){return o.id===val;})||opts[0];
-    val=curOpt.id;
-    root.innerHTML=''+
-      '<button class="sel-btn" type="button"><span class="ic">版</span>'+
+    var curOpt=null;for(var z=0;z<opts.length;z++){if(opts[z].id===val)curOpt=opts[z];} if(!curOpt)curOpt=opts[0];val=curOpt.id;
+    root.innerHTML='<button class="sel-btn" type="button"><span class="ic">版</span>'+
       '<span class="txt"><b>'+esc(curOpt.id)+'</b><i>'+esc(verTime(curOpt.id).slice(0,10))+'</i></span>'+
       '<span class="arrow">▼</span></button>'+
       '<div class="sel-list">'+opts.slice().sort(function(a,b){return Number(b.id)-Number(a.id);}).map(function(o){
@@ -189,84 +231,168 @@ function buildSel(rootId, opts, cur){
   render();
   root.addEventListener('click',function(e){
     var opt=e.target.closest('.opt');
-    if(opt){
-      val=opt.getAttribute('data-id'); onSel(val); render(); close();
-      return;
-    }
-    if(e.target.closest('.sel-btn')){ toggle(); }
-    else close();
+    if(opt){val=opt.getAttribute('data-id');render();close();onSelFn(val);return;}
+    if(e.target.closest('.sel-btn'))toggle();else close();
   });
-  document.addEventListener('click',function(e){ if(!root.contains(e.target)) close(); });
-  function toggle(){ open=!open; root.classList.toggle('open',open); }
-  function close(){ open=false; root.classList.remove('open'); }
-  return {get:function(){return val;}, set:function(v){val=v;render();}, onSel:function(fn){onSel=fn;}};
+  document.addEventListener('click',function(e){if(!root.contains(e.target))close();});
+  function toggle(){open=!open;root.classList.toggle('open',open);}
+  function close(){open=false;root.classList.remove('open');}
+  return {get:function(){return val;},
+    onSel:function(fn){onSelFn=fn;}};
 }
-var onSel=function(){}; // placeholder, 在 buildSel 中替换
 var selA=buildSel('selA',VERSIONS,VERSIONS[0].id);
 var selB=buildSel('selB',VERSIONS,getDef());
 
-/* ---------- 对比核心 ---------- */
-var body=document.getElementById('body');
-function diffFile(cfg,av,bv){
-  if(!av||!bv) return null;
-  var out=[];
-  if(cfg.array){
-    var aids={}, barr=Array.isArray(bv)?bv:Object.keys(bv).map(function(k){return bv[k];});
-    (Array.isArray(av)?av:Object.keys(av).map(function(k){return av[k];})).forEach(function(x){aids[x.id]=1;});
-    barr.forEach(function(x){ if(x&&!aids[x.id]){ out.push({id:x.id,name:cfg.getName(x)}); } });
-    return {a:(Array.isArray(av)?av.length:Object.keys(av).length), b:barr.length, added:out};
+/* ---------- 结构化 diff ---------- */
+/* 递归统计某个 key 的 delta 里“叶子变更”数量（用于给修改明细计数） */
+function countLeaf(d){
+  if(!d||typeof d!=='object')return 0;
+  if(Array.isArray(d)){ if(d.length===1||d.length===2||(d.length===3&&(d[2]===0||d[2]===2||d[2]===3)))return 1; return 0; }
+  var n=0;for(var k in d){if(Object.prototype.hasOwnProperty.call(d,k))n+=countLeaf(d[k]);}return n;
+}
+
+function analyze(cfg,av,bv){
+  var added=[],deleted=[],modified=[];
+  var isArr=!!cfg.array || Array.isArray(av);
+  if(isArr){
+    /* 数组：逐元素按 objectHash 找对应，仅对对应元素做单条 diff */
+    var keysA=av.map(function(x,i){return JDP.options().objectHash?JDP.options().objectHash.apply(JDP,[x,i]):(x&&(x.id||i));});
+    var keysB=bv.map(function(x,i){return JDP.options().objectHash?JDP.options().objectHash.apply(JDP,[x,i]):(x&&(x.id||i));});
+    var mapB={};keysB.forEach(function(k,i){mapB[k]=i;});
+    var foundB={};
+    keysA.forEach(function(k,i){
+      if(mapB[k]!==undefined){foundB[mapB[k]]=true;
+        var d=safeDiff(av[i],bv[mapB[k]]);
+        if(d&&countLeaf(d)>0)modified.push({key:k,left:av[i],right:bv[mapB[k]],delta:d});
+      } else deleted.push({key:k,name:cfg.getName(av[i])});
+    });
+    keysB.forEach(function(k,i){ if(!foundB[i]) added.push({key:k,name:cfg.getName(bv[i])}); });
+  } else {
+    var aKeys=Object.keys(av||{}), bKeys=Object.keys(bv||{});
+    var bSet={};bKeys.forEach(function(k){bSet[k]=1;});
+    aKeys.forEach(function(k){
+      if(!bSet[k]){deleted.push({key:k,name:cfg.getName(av[k])});}
+      else {var d=safeDiff(av[k],bv[k]); if(d&&countLeaf(d)>0) modified.push({key:k,left:av[k],right:bv[k],delta:d});}
+    });
+    bKeys.forEach(function(k){ if(aKeys.indexOf(k)<0) added.push({key:k,name:cfg.getName(bv[k])}); });
   }
-  var ak={}; Object.keys(av).forEach(function(k){ak[k]=1;});
-  Object.keys(bv).forEach(function(k){ if(!ak[k]){ out.push({id:k,name:cfg.getName(bv[k])}); } });
-  return {a:Object.keys(av).length, b:Object.keys(bv).length, added:out};
+  return {added:added,deleted:deleted,modified:modified};
 }
 
-function cardHtml(cfg,r){
-  var has=r.added.length>0;
-  var rows=r.added.map(function(x){
-    return '<div class="nrow"><span class="id">'+esc(x.id)+'</span><span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span></div>';
-  }).join('');
-  return '<div class="fcard'+(has?' open':'')+'"><div class="fhd">'+
-    '<span class="t">'+esc(cfg.title)+'<span class="emu">'+esc(cfg.emu)+'</span>'+
-    (has?'<span class="tag add">+'+r.added.length+' 新增</span>':'<span class="tag none">无新增</span>')+'</span>'+
-    '<span class="ctl"><span class="ct"><b>'+r.a+'</b><span class="arr">→</span><b>'+r.b+'</b></span>'+
-    (has?'<span class="ar">▶</span>':'')+'</span></div>'+
-    (has?'<div class="fbd"><div class="newlist">'+rows+'</div></div>':'')+
-    '</div>';
+/* 单条目的 diff：包裹在 try 中防止超大对象导致内存/超时 */
+function safeDiff(a,b){
+  try{ return JDP.diff(a,b)||undefined; }
+  catch(e){ return undefined; }
 }
 
-/* 串行逐文件加载，逐个 await，避免并发打爆连接 */
+/* 渲染单条修改的字段级 diff（用 jsondiffpatch html formatter 对该条目做局部 diff） */
+function modHtml(item, isSingle){
+  var d=JDP.diff(item.left,item.right);
+  var html;
+  try{ html=htmlFmt.format(d,isSingle?undefined:item.left); }
+  catch(e){ html='<div class="jsondiffpatch-error">'+esc(e&&e.message||e)+'</div>'; }
+  return html;
+}
+
+function cardHtml(cfg,res){
+  var added=res.added,deleted=res.deleted,modified=res.modified;
+  var hasAny=added.length||deleted.length||modified.length;
+  var tags='';
+  if(!hasAny) tags='<span class="tag none">无变更</span>';
+  else{
+    if(modified.length)tags+='<span class="tag mod">改 '+modified.length+'</span>';
+    if(added.length)tags+='<span class="tag add">+'+added.length+'</span>';
+    if(deleted.length)tags+='<span class="tag del">-'+deleted.length+'</span>';
+  }
+  var body='';
+  if(hasAny){
+    if(added.length){
+      body+='<div class="group add"><div class="glab">新增 '+added.length+'</div><div class="newlist">'+
+        added.map(function(x){return '<div class="nrow"><span class="id">'+(cfg.array?esc(x.key):esc(x.key))+'</span><span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span></div>';}).join('')+
+      '</div></div>';
+    }
+    if(deleted.length){
+      body+='<div class="group del"><div class="glab">删除 '+deleted.length+'</div><div class="newlist">'+
+        deleted.map(function(x){return '<div class="nrow del"><span class="id">'+esc(x.key)+'</span><span class="nm">'+esc(x.name||'')+'</span></div>';}).join('')+
+      '</div></div>';
+    }
+    if(modified.length){
+      body+='<div class="group mod"><div class="glab">修改 '+modified.length+'</div><div class="modlist">'+
+        modified.map(function(x,idx){
+          var n=countLeaf(x.delta);
+          return '<div class="moditem"><div class="mh" data-i="'+idx+'"><span class="id">'+esc(x.key)+'</span>'+
+            '<span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span>'+
+            '<span class="fcount">'+n+' 处变化</span><span class="ar">▶</span></div>'+
+            '<div class="mb"></div></div>';
+        }).join('')+
+      '</div></div>';
+    }
+  }
+  return '<div class="fcard'+(hasAny&&toolbarOpen?' open':'')+'" data-any="'+(hasAny?1:0)+'"><div class="fhd"><span class="t">'+esc(cfg.title)+
+    '<span class="emu">'+esc(cfg.emu)+'</span></span><span class="tags">'+tags+'</span>'+
+    '<span class="ctl"><span class="ct"><b>'+res.countA+'</b><span class="arr">→</span><b>'+res.countB+'</b></span>'+
+    (hasAny?'<span class="ar">▶</span>':'')+'</span></div>'+
+    (hasAny?'<div class="fbd">'+body+'</div>':'')+'</div>';
+}
+var toolbarOpen=false;
+
 async function run(){
-  var va=selA.get(), vb=selB.get();
-  if(!va||!vb) return;
+  var va=selA.get(),vb=selB.get();
+  if(!va||!vb)return;
   document.getElementById('goBtn').disabled=true;
+  var body=document.getElementById('body');
   body.innerHTML='<div class="loading"><div class="spin"></div><div>正在对比 '+esc(va)+' → '+esc(vb)+' …</div></div>';
 
-  var items=[], totalA=0,totalB=0,totalAdd=0, errors=[];
+  var cards=[],tA=0,tB=0,tAdd=0,tDel=0,tMod=0,errors=[];
   for(var i=0;i<FILES.length;i++){
-    var cfg=FILES[i], av=null, bv=null, fail=null;
-    try{ var ra=await _fetch(dataUrl(va,cfg.file)); if(ra&&ra.ok){ av=await ra.json(); } else { fail='HTTP '+(ra&&ra.status||'?')+' ('+va+')'; } }
-    catch(e){ fail='加载失败 ('+va+'): '+e.message; }
-    if(!av && !fail){ fail='无数据 ('+va+')'; }
-    try{ var rb=await _fetch(dataUrl(vb,cfg.file)); if(rb&&rb.ok){ bv=await rb.json(); } else { fail=(fail?fail+'; ':'')+'HTTP '+(rb&&rb.status||'?')+' ('+vb+')'; } }
-    catch(e){ fail=(fail?fail+'; ':'')+'加载失败 ('+vb+'): '+e.message; }
-    var r=diffFile(cfg,av,bv);
-    if(r===null){ r={a:0,b:0,added:[]}; }
-    totalA+=r.a; totalB+=r.b; totalAdd+=r.added.length;
-    if(fail) errors.push(esc(cfg.title)+': '+fail);
-    items.push({cfg:cfg,r:r});
+    var cfg=FILES[i],av=null,bv=null,fail=null;
+    try{var ra=await _fetch(dataUrl(va,cfg.file));if(ra&&ra.ok){av=await ra.json();}else{fail='HTTP '+(ra&&ra.status||'?')+' ('+va+')';}}
+    catch(e){fail='加载失败 ('+va+'): '+e.message;}
+    if(!av&&!fail)fail='无数据 ('+va+')';
+    try{var rb=await _fetch(dataUrl(vb,cfg.file));if(rb&&rb.ok){bv=await rb.json();}else{fail=(fail?fail+'; ':'')+'HTTP '+(rb&&rb.status||'?')+' ('+vb+')';}}
+    catch(e){fail=(fail?fail+'; ':'')+'加载失败 ('+vb+'): '+e.message;}
+    var cA=cnt(av),cB=cnt(bv);tA+=cA;tB+=cB;
+    var res={added:[],deleted:[],modified:[],countA:cA,countB:cB};
+    if(!fail){try{res=analyze(cfg,av,bv);res.countA=cA;res.countB=cB;}catch(e){fail='对比失败: '+e.message;}}
+    tAdd+=res.added.length;tDel+=res.deleted.length;tMod+=res.modified.length;
+    if(fail)errors.push(esc(cfg.title)+': '+fail);
+    cards.push({cfg:cfg,res:res});
   }
 
   var sumHtml='<div class="summary">'+
-    '<div class="sumcard"><span class="lab">旧版本条目 '+esc(va)+'</span><span class="val">'+totalA.toLocaleString()+'</span><span class="sub">'+esc(verTime(va))+'</span></div>'+
-    '<div class="sumcard"><span class="lab">新版本条目 '+esc(vb)+'</span><span class="val">'+totalB.toLocaleString()+'</span><span class="sub">'+esc(verTime(vb))+'</span></div>'+
-    '<div class="sumcard add"><span class="lab">合计新增</span><span class="val add">+'+totalAdd.toLocaleString()+'</span><span class="sub">共 '+FILES.length+' 类数据</span></div>'+
+    '<div class="sumcard"><span class="lab">旧版本条目</span><span class="val">'+tA.toLocaleString()+'<span class="unit">条</span></span><span class="sub">'+esc(verTime(va))+'</span></div>'+
+    '<div class="sumcard"><span class="lab">新版本条目</span><span class="val">'+tB.toLocaleString()+'<span class="unit">条</span></span><span class="sub">'+esc(verTime(vb))+'</span></div>'+
+    '<div class="sumcard add"><span class="lab">新增</span><span class="val">+'+tAdd.toLocaleString()+'</span><span class="sub">共 '+FILES.length+' 类</span></div>'+
+    '<div class="sumcard del"><span class="lab">删除</span><span class="val">-'+tDel.toLocaleString()+'</span></div>'+
+    '<div class="sumcard mod"><span class="lab">修改</span><span class="val">'+tMod.toLocaleString()+'</span></div>'+
   '</div>';
-  var cards=items.map(function(x){ return cardHtml(x.cfg,x.r); }).join('');
   var err=errors.length?'<div class="empty" style="padding:26px"><div class="big">部分数据加载失败</div>'+errors.map(function(e){return '<div class="err">'+e+'</div>';}).join('')+'</div>':'';
-  body.innerHTML=sumHtml+err+cards;
+  body.innerHTML=sumHtml+err+cards.map(function(x){return cardHtml(x.cfg,x.res);}).join('');
+
+  /* 绑定折叠与修改明细 */
+  body.querySelectorAll('.fhd').forEach(function(hd){
+    hd.addEventListener('click',function(){var c=hd.closest('.fcard');if(c)c.classList.toggle('open');});
+  });
+  body.querySelectorAll('.moditem .mh').forEach(function(mh){
+    mh.addEventListener('click',function(){
+      var mi=mh.closest('.moditem'),mb=mi.querySelector('.mb');
+      var open=!mi.classList.contains('open');
+      mi.classList.toggle('open',open);
+      if(open&&!mb.getAttribute('data-rendered')){
+        var ci=Number(mh.getAttribute('data-i'));
+        var fcard=mh.closest('.fcard');
+        var fidx=Array.prototype.indexOf.call(fcard.parentNode.children,fcard);
+        mb.innerHTML='<div class="loading" style="padding:16px"><div class="spin"></div></div>';
+        var cfg=FILES[Array.prototype.indexOf.call(body.querySelectorAll('.fcard'),fcard)];
+        var res=cards[Array.prototype.indexOf.call(body.querySelectorAll('.fcard'),fcard)].res;
+        mb.innerHTML=modHtml(res.modified[ci],false);
+        mb.setAttribute('data-rendered','1');
+      }
+    });
+  });
   document.getElementById('goBtn').disabled=false;
 }
+function cnt(x){return Array.isArray(x)?x.length:(x?Object.keys(x).length:0);}
 
 document.getElementById('goBtn').addEventListener('click',run);
 run();
