@@ -7,8 +7,8 @@
 'use strict';
 if(window.parent!==window) document.documentElement.classList.add('embedded');
 
-const VERSIONS=[{id:'29836883',label:'29836883',dir:'../ace/29836883/'}];
-const DEFAULT_VER='29836883';
+const VERSIONS=[{id:'29836883',label:'29836883',dir:'../ace/29836883/'},{id:'29842023',label:'29842023',dir:'../ace/29842023/'}];
+const DEFAULT_VER='29842023';
 function getVerParam(){
   const p=new URLSearchParams(location.search);
   let v=p.get('v');

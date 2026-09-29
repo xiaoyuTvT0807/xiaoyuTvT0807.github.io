@@ -407,9 +407,10 @@ if(window.parent!==window) document.documentElement.classList.add("embedded");
 /* 数据由浏览器原生 fetch 合并文件：ace/<版本>/vehicles.json
    结构 {"<ID>":{"车辆档案":{…}}, …}，无需任何构建步骤 */
 const VERSIONS = [
-  {id:'29836883', label:'29836883', data:'../ace/29836883/vehicles.json'}
+  {id:'29836883', label:'29836883', data:'../ace/29836883/vehicles.json'},
+  {id:'29842023', label:'29842023', data:'../ace/29842023/vehicles.json'}
 ];
-const DEFAULT_VER = '29836883';
+const DEFAULT_VER = '29842023';
 /* 版本号 → 时间：版本号是「Unix 时间戳的分钟数」 */
 function verTime(id){
   const n=Number(id);
@@ -1047,7 +1048,7 @@ async function init(){
 init().catch(function(err){
   const m=document.getElementById('main');
   if(m) m.innerHTML='<div class="soon-view"><div class="big">数据载入失败</div><div>'+(err&&err.message?String(err.message):'')+'</div>'+
-    '<div style="font-size:12px">请确认通过 HTTP 访问，且 <code>ace/29836883/vehicles.json</code> 可访问</div></div>';
+    '<div style="font-size:12px">请确认通过 HTTP 访问，且 <code>ace/'+CUR_VER+'/vehicles.json</code> 可访问</div></div>';
 });
 </script>
 </body>
