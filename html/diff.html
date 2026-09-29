@@ -66,6 +66,15 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
 .run-btn:hover{filter:brightness(1.06)}
 .run-btn:disabled{opacity:.5;cursor:default}
 
+/* ---------- 文件类型选择条 ---------- */
+.typebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:2px}
+.tchip{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;user-select:none;
+  background:#fff;border:1px solid var(--line-2);color:var(--ink-2);box-shadow:var(--sh-1);transition:.15s;font-family:inherit}
+.tchip:hover{border-color:var(--accent);color:var(--ink)}
+.tchip.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(109,94,252,.3)}
+.tchip .n{font-size:10.5px;background:rgba(35,39,47,.08);color:var(--muted);padding:1px 7px;border-radius:999px;font-weight:700}
+.tchip.on .n{background:rgba(255,255,255,.22);color:#fff}
+
 /* ---------- 汇总 ---------- */
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
 .sumcard{padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:5px}
@@ -175,6 +184,7 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto
       <button class="run-btn" id="goBtn">开始对比</button>
     </div>
   </div>
+  <div class="typebar" id="typeBar"></div>
   <div id="body"></div>
 </main>
 
@@ -263,7 +273,7 @@ function analyze(cfg,av,bv){
     keysA.forEach(function(k,i){
       if(mapB[k]!==undefined){foundB[mapB[k]]=true;
         var d=safeDiff(av[i],bv[mapB[k]]);
-        if(d&&countLeaf(d)>0)modified.push({key:k,left:av[i],right:bv[mapB[k]],delta:d});
+        if(d&&countLeaf(d)>0)modified.push({key:k,name:cfg.getName(bv[mapB[k]]),left:av[i],right:bv[mapB[k]],delta:d});
       } else deleted.push({key:k,name:cfg.getName(av[i])});
     });
     keysB.forEach(function(k,i){ if(!foundB[i]) added.push({key:k,name:cfg.getName(bv[i])}); });
@@ -272,7 +282,7 @@ function analyze(cfg,av,bv){
     var bSet={};bKeys.forEach(function(k){bSet[k]=1;});
     aKeys.forEach(function(k){
       if(!bSet[k]){deleted.push({key:k,name:cfg.getName(av[k])});}
-      else {var d=safeDiff(av[k],bv[k]); if(d&&countLeaf(d)>0) modified.push({key:k,left:av[k],right:bv[k],delta:d});}
+      else {var d=safeDiff(av[k],bv[k]); if(d&&countLeaf(d)>0) modified.push({key:k,name:cfg.getName(bv[k]),left:av[k],right:bv[k],delta:d});}
     });
     bKeys.forEach(function(k){ if(aKeys.indexOf(k)<0) added.push({key:k,name:cfg.getName(bv[k])}); });
   }
@@ -289,12 +299,12 @@ function safeDiff(a,b){
 function modHtml(item, isSingle){
   var d=JDP.diff(item.left,item.right);
   var html;
-  try{ html=htmlFmt.format(d,isSingle?undefined:item.left); }
+  try{ html=htmlFmt(d,isSingle?undefined:item.left); }
   catch(e){ html='<div class="jsondiffpatch-error">'+esc(e&&e.message||e)+'</div>'; }
   return html;
 }
 
-function cardHtml(cfg,res){
+function cardHtml(cfg,res,cardIdx){
   var added=res.added,deleted=res.deleted,modified=res.modified;
   var hasAny=added.length||deleted.length||modified.length;
   var tags='';
@@ -308,7 +318,7 @@ function cardHtml(cfg,res){
   if(hasAny){
     if(added.length){
       body+='<div class="group add"><div class="glab">新增 '+added.length+'</div><div class="newlist">'+
-        added.map(function(x){return '<div class="nrow"><span class="id">'+(cfg.array?esc(x.key):esc(x.key))+'</span><span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span></div>';}).join('')+
+        added.map(function(x){return '<div class="nrow"><span class="id">'+esc(x.key)+'</span><span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span></div>';}).join('')+
       '</div></div>';
     }
     if(deleted.length){
@@ -320,7 +330,7 @@ function cardHtml(cfg,res){
       body+='<div class="group mod"><div class="glab">修改 '+modified.length+'</div><div class="modlist">'+
         modified.map(function(x,idx){
           var n=countLeaf(x.delta);
-          return '<div class="moditem"><div class="mh" data-i="'+idx+'"><span class="id">'+esc(x.key)+'</span>'+
+          return '<div class="moditem"><div class="mh" data-ic="'+cardIdx+'" data-ii="'+idx+'"><span class="id">'+esc(x.key)+'</span>'+
             '<span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span>'+
             '<span class="fcount">'+n+' 处变化</span><span class="ar">▶</span></div>'+
             '<div class="mb"></div></div>';
@@ -336,29 +346,36 @@ function cardHtml(cfg,res){
 }
 var toolbarOpen=false;
 
-async function run(){
-  var va=selA.get(),vb=selB.get();
-  if(!va||!vb)return;
-  document.getElementById('goBtn').disabled=true;
-  var body=document.getElementById('body');
-  body.innerHTML='<div class="loading"><div class="spin"></div><div>正在对比 '+esc(va)+' → '+esc(vb)+' …</div></div>';
+function cnt(x){return Array.isArray(x)?x.length:(x?Object.keys(x).length:0);}
 
-  var cards=[],tA=0,tB=0,tAdd=0,tDel=0,tMod=0,errors=[];
-  for(var i=0;i<FILES.length;i++){
-    var cfg=FILES[i],av=null,bv=null,fail=null;
-    try{var ra=await _fetch(dataUrl(va,cfg.file));if(ra&&ra.ok){av=await ra.json();}else{fail='HTTP '+(ra&&ra.status||'?')+' ('+va+')';}}
-    catch(e){fail='加载失败 ('+va+'): '+e.message;}
-    if(!av&&!fail)fail='无数据 ('+va+')';
-    try{var rb=await _fetch(dataUrl(vb,cfg.file));if(rb&&rb.ok){bv=await rb.json();}else{fail=(fail?fail+'; ':'')+'HTTP '+(rb&&rb.status||'?')+' ('+vb+')';}}
-    catch(e){fail=(fail?fail+'; ':'')+'加载失败 ('+vb+'): '+e.message;}
-    var cA=cnt(av),cB=cnt(bv);tA+=cA;tB+=cB;
-    var res={added:[],deleted:[],modified:[],countA:cA,countB:cB};
-    if(!fail){try{res=analyze(cfg,av,bv);res.countA=cA;res.countB=cB;}catch(e){fail='对比失败: '+e.message;}}
-    tAdd+=res.added.length;tDel+=res.deleted.length;tMod+=res.modified.length;
-    if(fail)errors.push(esc(cfg.title)+': '+fail);
-    cards.push({cfg:cfg,res:res});
-  }
+/* ================= 按类型选择 + 按需加载 ================= */
+var CACHE={};           // CACHE[va|vb][idx] = res
+var curSel=1;           // 0=全部, 1..10=对应 FILES[i-1]
 
+function pairKey(){return (selA.get()||'')+'|'+(selB.get()||'');}
+
+async function loadType(idx,force){
+  var key=pairKey();
+  if(!CACHE[key])CACHE[key]={};
+  if(!force&&CACHE[key][idx]&&CACHE[key][idx].done)return CACHE[key][idx];
+  var cfg=FILES[idx],va=selA.get(),vb=selB.get();
+  var av=null,bv=null;
+  try{var ra=await _fetch(dataUrl(va,cfg.file));if(ra&&ra.ok)av=await ra.json();}catch(e){}
+  try{var rb=await _fetch(dataUrl(vb,cfg.file));if(rb&&rb.ok)bv=await rb.json();}catch(e){}
+  var cA=cnt(av),cB=cnt(bv);
+  var res={added:[],deleted:[],modified:[],countA:cA,countB:cB,error:null};
+  if(av==null&&bv==null){res.error='两个版本均无数据';}
+  else{try{Object.assign(res,analyze(cfg,av,bv));res.countA=cA;res.countB=cB;}catch(e){res.error='对比失败: '+e.message;}}
+  res.done=true;
+  CACHE[key][idx]=res;
+  return res;
+}
+
+function bodyEl(){return document.getElementById('body');}
+
+function renderCards(va,vb,cards,errors){
+  var tA=0,tB=0,tAdd=0,tDel=0,tMod=0;
+  cards.forEach(function(x){tA+=x.res.countA;tB+=x.res.countB;tAdd+=x.res.added.length;tDel+=x.res.deleted.length;tMod+=x.res.modified.length;});
   var sumHtml='<div class="summary">'+
     '<div class="sumcard"><span class="lab">旧版本条目</span><span class="val">'+tA.toLocaleString()+'<span class="unit">条</span></span><span class="sub">'+esc(verTime(va))+'</span></div>'+
     '<div class="sumcard"><span class="lab">新版本条目</span><span class="val">'+tB.toLocaleString()+'<span class="unit">条</span></span><span class="sub">'+esc(verTime(vb))+'</span></div>'+
@@ -367,35 +384,75 @@ async function run(){
     '<div class="sumcard mod"><span class="lab">修改</span><span class="val">'+tMod.toLocaleString()+'</span></div>'+
   '</div>';
   var err=errors.length?'<div class="empty" style="padding:26px"><div class="big">部分数据加载失败</div>'+errors.map(function(e){return '<div class="err">'+e+'</div>';}).join('')+'</div>':'';
-  body.innerHTML=sumHtml+err+cards.map(function(x){return cardHtml(x.cfg,x.res);}).join('');
+  bodyEl().innerHTML=sumHtml+err+cards.map(function(x,i){return cardHtml(x.cfg,x.res,i);}).join('');
+  bindCards(cards);
+}
 
-  /* 绑定折叠与修改明细 */
+function bindCards(cards){
+  var body=bodyEl();
   body.querySelectorAll('.fhd').forEach(function(hd){
     hd.addEventListener('click',function(){var c=hd.closest('.fcard');if(c)c.classList.toggle('open');});
   });
   body.querySelectorAll('.moditem .mh').forEach(function(mh){
+    var ic=Number(mh.getAttribute('data-ic')),ii=Number(mh.getAttribute('data-ii'));
+    var res=(cards[ic]||{}).res||{};
     mh.addEventListener('click',function(){
       var mi=mh.closest('.moditem'),mb=mi.querySelector('.mb');
       var open=!mi.classList.contains('open');
       mi.classList.toggle('open',open);
       if(open&&!mb.getAttribute('data-rendered')){
-        var ci=Number(mh.getAttribute('data-i'));
-        var fcard=mh.closest('.fcard');
-        var fidx=Array.prototype.indexOf.call(fcard.parentNode.children,fcard);
         mb.innerHTML='<div class="loading" style="padding:16px"><div class="spin"></div></div>';
-        var cfg=FILES[Array.prototype.indexOf.call(body.querySelectorAll('.fcard'),fcard)];
-        var res=cards[Array.prototype.indexOf.call(body.querySelectorAll('.fcard'),fcard)].res;
-        mb.innerHTML=modHtml(res.modified[ci],false);
+        mb.innerHTML=modHtml(res.modified[ii],false);
         mb.setAttribute('data-rendered','1');
       }
     });
   });
-  document.getElementById('goBtn').disabled=false;
 }
-function cnt(x){return Array.isArray(x)?x.length:(x?Object.keys(x).length:0);}
 
-document.getElementById('goBtn').addEventListener('click',run);
-run();
+function setLoading(txt){bodyEl().innerHTML='<div class="loading"><div class="spin"></div><div>'+txt+'</div></div>';}
+
+async function renderOne(idx){
+  var va=selA.get(),vb=selB.get();
+  setLoading('正在对比 '+esc(va)+' → '+esc(vb)+' · '+esc(FILES[idx].title)+' …');
+  var res=await loadType(idx);
+  renderCards(va,vb,[{cfg:FILES[idx],res:res}],res.error?[esc(FILES[idx].title)+': '+res.error]:[]);
+}
+
+async function renderAll(){
+  var va=selA.get(),vb=selB.get();
+  var body=bodyEl();
+  body.innerHTML='<div class="loading"><div class="spin"></div><div>正在对比 '+esc(va)+' → '+esc(vb)+'（共 '+FILES.length+' 类）…</div></div>';
+  var cards=[],errors=[];
+  for(var i=0;i<FILES.length;i++){
+    body.innerHTML='<div class="loading"><div class="spin"></div><div>正在对比 '+esc(va)+' → '+esc(vb)+' · '+esc(FILES[i].title)+'（'+(i+1)+'/'+FILES.length+'）…</div></div>';
+    var res=await loadType(i);
+    if(res.error)errors.push(esc(FILES[i].title)+': '+res.error);
+    cards.push({cfg:FILES[i],res:res});
+    if(i+1<FILES.length){/* continue */}
+  }
+  renderCards(va,vb,cards,errors);
+}
+
+function renderTypeBar(){
+  var bar=document.getElementById('typeBar');
+  var t='<div class="tchip'+(curSel===0?' on':'')+'" data-i="0"><span>全部</span></div>';
+  FILES.forEach(function(f,i){
+    t+='<div class="tchip'+(curSel===i+1?' on':'')+'" data-i="'+(i+1)+'">'+esc(f.title)+'</div>';
+  });
+  bar.innerHTML=t;
+  bar.querySelectorAll('.tchip').forEach(function(c){
+    c.addEventListener('click',function(){
+      curSel=Number(c.getAttribute('data-i'));
+      renderTypeBar();
+      if(curSel===0)renderAll();else renderOne(curSel-1);
+    });
+  });
+}
+function rerun(){document.getElementById('goBtn').disabled=false;if(curSel===0)renderAll();else renderOne(curSel-1);}
+
+document.getElementById('goBtn').addEventListener('click',rerun);
+renderTypeBar();
+renderOne(0);
 })();
 </script>
 </body>
