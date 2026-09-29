@@ -746,7 +746,9 @@ function bindMedia(){
 /* ---------- 版本标签（独立打开时可用；iframe 模式由外壳提供） ---------- */
 function renderVerTabs(){
   const el=document.getElementById('verTabs'); if(!el) return;
-  el.innerHTML='<div class="vt-hd">数据版本</div>'+VERSIONS.map(function(x){
+  /* 版本始终按「最新在前」展示（版本号 = 分钟时间戳，越大越新） */
+  const vers=VERSIONS.slice().sort(function(a,b){ return Number(b.id)-Number(a.id); });
+  el.innerHTML='<div class="vt-hd">数据版本</div>'+vers.map(function(x){
     return '<span class="vt'+(x.id===CUR_VER?' on':'')+'" data-v="'+esc(x.id)+'">'+esc(x.label)+'</span>';
   }).join('');
   el.querySelectorAll('.vt').forEach(function(t){

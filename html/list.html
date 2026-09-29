@@ -737,9 +737,11 @@ function selHTML(label,arr,cur,kind,icons,hints){
 const VER_ICON='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.9 12V4a2 2 0 0 1 2-2h8a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>';
 function selVerHTML(cur){
   const t=verTime(cur);
+  /* 版本下拉始终按「最新在前」展示（版本号 = 分钟时间戳，越大越新） */
+  const vers=VERSIONS.slice().sort(function(a,b){ return Number(b.id)-Number(a.id); });
   return '<div class="sel" data-kind="ver">'+
     '<div class="sel-btn"><span class="ic">'+VER_ICON+'</span><span>版本：'+esc(cur)+(t?'<i class="vtime">'+esc(t.slice(0,10))+'</i>':'')+'</span><span class="arrow">▼</span></div>'+
-    '<div class="sel-list">'+VERSIONS.map(function(x){
+    '<div class="sel-list">'+vers.map(function(x){
       const xt=verTime(x.id);
       return '<div class="opt'+(x.id===cur?' on':'')+'" data-v="'+esc(x.id)+'" title="'+esc(xt)+'">'+
         '<span>'+esc(x.label)+'</span>'+(xt?'<span class="hint">'+esc(xt.slice(0,10))+'</span>':'')+'</div>';

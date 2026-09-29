@@ -479,10 +479,12 @@ function verTime(id){
 /* ===== 侧栏顶部：版本下拉（全局唯一；子页被嵌入时不再重复显示自己的版本下拉） ===== */
 const verSel=document.getElementById('verSel');
 function renderVer(){
+  /* 版本下拉始终按「最新在前」展示（版本号 = 分钟时间戳，越大越新） */
+  const vers=VERSIONS.slice().sort(function(a,b){ return Number(b.id)-Number(a.id); });
   verSel.innerHTML='<button class="vsel-btn" type="button"><span class="ic">版</span>'+
     '<span class="vtxt"><b>'+CUR_VER+'</b><i>'+verTime(CUR_VER)+'</i></span>'+
     '<span class="arrow">▼</span></button>'+
-    '<div class="vsel-list">'+VERSIONS.map(function(x){
+    '<div class="vsel-list">'+vers.map(function(x){
       const t=verTime(x.id);
       return '<div class="opt'+(x.id===CUR_VER?' on':'')+'" data-v="'+x.id+'" title="'+t+'">'+
         '<span>'+x.label+'</span>'+(t?'<span class="hint">'+t.slice(0,10)+'</span>':'')+'</div>';
