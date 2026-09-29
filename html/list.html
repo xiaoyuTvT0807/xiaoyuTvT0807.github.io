@@ -43,7 +43,13 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 ::selection{background:rgba(109,94,252,.16);color:var(--accent-ink)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+/* ---------- 移动端点击优化：去蓝框/点按高亮/双击缩放延迟，点按更跟手 ---------- */
+*{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:none}
+button,.sel-btn,.chipbtn,.opt,.row,.acard,.icard,.art-hd,.run-btn,.tchip,.vh,.fhd,.catitem .ch,.mclose,.pager button,.branched-menu__item,.branched-menu__head,label{user-select:none;touch-action:manipulation;cursor:pointer}
+input,textarea{touch-action:manipulation}
+@media (max-width:700px){input,textarea{font-size:16px}}
+.acard:active,.icard:active,.row:active,.vcard:active,.vh:active,.fhd:active,.tchip:active,.run-btn:active,.chipbtn:active{transform:scale(.97)}
 
 /* ---------- 侧栏：唯一的玻璃层 ---------- */
 .sidebar{
@@ -155,7 +161,7 @@ body{
 .sel[data-kind="sort"].open .sel-btn .ic,
 .sel[data-kind="sort"] .sel-btn:hover .ic{background:var(--accent-soft);color:var(--accent-ink)}
 button.sel-btn{border:0;font:inherit;background:none;appearance:none;-webkit-appearance:none}
-button.sel-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.sel-btn:focus-visible{outline:none}
 .sort-toggle .arrow{font-size:10px;opacity:.7}
 .sel-list{
   position:absolute;top:calc(100% + 6px);left:0;min-width:100%;z-index:40;display:none;flex-direction:column;gap:2px;

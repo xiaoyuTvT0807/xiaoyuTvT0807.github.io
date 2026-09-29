@@ -23,7 +23,13 @@
 html,body{height:100%}
 body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(109,94,252,.16);color:var(--accent-ink)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+/* ---------- 移动端点击优化：去蓝框/点按高亮/双击缩放延迟，点按更跟手 ---------- */
+*{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:none}
+button,.sel-btn,.chipbtn,.opt,.row,.acard,.icard,.art-hd,.run-btn,.tchip,.vh,.fhd,.catitem .ch,.mclose,.pager button,.branched-menu__item,.branched-menu__head,label{user-select:none;touch-action:manipulation;cursor:pointer}
+input,textarea{touch-action:manipulation}
+@media (max-width:700px){input,textarea{font-size:16px}}
+.acard:active,.icard:active,.row:active,.vcard:active,.vh:active,.fhd:active,.tchip:active,.run-btn:active,.chipbtn:active{transform:scale(.97)}
 .main{padding:0 26px 56px}
 
 /* ---------- 顶栏（玻璃，与全站一致） ---------- */
