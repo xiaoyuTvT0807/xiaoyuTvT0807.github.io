@@ -469,15 +469,16 @@ function renderNode(n){
 }
 function shapeSVG(name){
   const n=String(name||''), V='viewBox="0 0 24 24"';
-  const pp=function(sides,r){ r=r||8.5; const p=[];
-    for(let i=0;i<sides;i++){const a=-Math.PI/2+i*2*Math.PI/sides;p.push((12+r*Math.cos(a)).toFixed(1)+','+(12+r*Math.sin(a)).toFixed(1));}
+  const pp=function(sides,r,off){ r=r||8.5; const p=[];
+    for(let i=0;i<sides;i++){const a=-Math.PI/2+(off||0)+i*2*Math.PI/sides;p.push((12+r*Math.cos(a)).toFixed(1)+','+(12+r*Math.sin(a)).toFixed(1));}
     return p.join(' '); };
   if(n.indexOf('圆')>=0)  return '<svg '+V+'><circle cx="12" cy="12" r="8.5"/></svg>';
   if(n.indexOf('三角')>=0)return '<svg '+V+'><polygon points="'+pp(3,9)+'"/></svg>';
   if(n.indexOf('菱形')>=0)return '<svg '+V+'><polygon points="'+pp(4,9)+'"/></svg>';
   if(/V/i.test(n))        return '<svg '+V+'><path d="M5 5 L12 19 L19 5"/></svg>';
   const m=n.match(/(\d+)/); const sides=m?Math.max(3,+m[1]):(n.indexOf('六')>=0?6:5);
-  return '<svg '+V+'><polygon points="'+pp(sides)+'"/></svg>';
+  const off=sides===6?Math.PI/6:0; // 六边形横底朝下（旋转 30°）
+  return '<svg '+V+'><polygon points="'+pp(sides,9,off)+'"/></svg>';
 }
 
 /* ---------- 详情渲染 ---------- */

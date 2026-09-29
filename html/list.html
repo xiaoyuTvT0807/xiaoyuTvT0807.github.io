@@ -596,10 +596,10 @@ function tierOf(g){g=Number(g)||0;
 function pct(v){if(v===undefined||v===null||v==='')return null;const n=Number(v);if(isNaN(n))return null;return (Math.round(n/100*100)/100)+'%';}
 
 /* ===== 芯片槽形状：手绘 SVG ===== */
-function polyPoints(sides,r,cx,cy){
+function polyPoints(sides,r,cx,cy,off){
   r=r||8.5;cx=(cx===undefined?12:cx);cy=(cy===undefined?12:cy);
   const p=[];
-  for(let i=0;i<sides;i++){const a=-Math.PI/2+i*2*Math.PI/sides;p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1));}
+  for(let i=0;i<sides;i++){const a=-Math.PI/2+(off||0)+i*2*Math.PI/sides;p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1));}
   return p.join(' ');
 }
 function shapeSVG(name){
@@ -609,7 +609,8 @@ function shapeSVG(name){
   if(n.indexOf('菱形')>=0) return '<svg '+V+'><polygon points="'+polyPoints(4,9)+'"/></svg>';
   if(/V/i.test(n))         return '<svg '+V+'><path d="M5 5 L12 19 L19 5"/></svg>';
   const m=n.match(/(\d+)/); const sides=m?Math.max(3,+m[1]):(n.indexOf('六')>=0?6:5);
-  return '<svg '+V+'><polygon points="'+polyPoints(sides)+'"/></svg>';
+  const off=sides===6?Math.PI/6:0; // 六边形横底朝下（旋转 30°）
+  return '<svg '+V+'><polygon points="'+polyPoints(sides,9,undefined,undefined,off)+'"/></svg>';
 }
 
 /* ===== 骨架屏 ===== */
