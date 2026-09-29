@@ -5,3 +5,8 @@ ace/缓存/
 ace/解密结果/
 ace/提取结果/
 ace/init_*/
+# 本地提取/处理脚本与临时产物（非线上部署内容）
+/提取/
+/scripts/
+/*.zip
+/test-diff.mjs

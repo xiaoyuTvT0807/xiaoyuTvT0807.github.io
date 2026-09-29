@@ -8,6 +8,17 @@
 (function(){
 'use strict';
 var CACHE='acewiki-data-v1';
+var BUILD='20290929';          /* 静态资源缓存版本号：改了 css/js 就 +1，强制缓存取新 */
+
+/* 注册 Service Worker（GH Pages 无法自定义缓存头，用 SW 做缓存控制）。
+   页面在 /html/，SW 在站点根 /sw.js：相对路径 ../sw.js，scope 为全站根目录。 */
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  (function(){
+    function reg(){ try{ navigator.serviceWorker.register('../sw.js',{scope:'/'}); }catch(e){} }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ setTimeout(reg,1200); });
+    else setTimeout(reg,1200);
+  })();
+}
 
 /* 版本清单（与各页一致） */
 var VERSIONS=[
@@ -46,21 +57,28 @@ function fetchData(url){
   return fetch(url);
 }
 
-/* 后台预取全部文件；逐条串行，避免并发打爆连接数 */
+/* 后台预取：小并发（limit=3）逐批拉取，避免串行拖慢启动，也不打爆连接数 */
 function preloadAll(done){
   done = done || function(){};
   if(!('caches' in window)){ done(); return; }
-  var urls=allUrls(), i=0;
+  var urls=allUrls(), i=0, pending=0, finished=false;
+  var CONC=3;
   caches.open(CACHE).then(function(cache){
-    (function next(){
-      if(i>=urls.length){ done(); return; }
-      var u=urls[i++];
-      cache.match(u).then(function(hit){
-        if(hit) next();                            /* 已有缓存，跳过 */
-        else fetch(u).then(function(res){ if(res&&res.ok){ cache.put(u,res); } next(); })
-                    .catch(function(){ next(); });
-      }).catch(function(){ next(); });
-    })();
+    function fire(){
+      if(finished) return;
+      while(pending<CONC && i<urls.length){
+        var u=urls[i++]; pending++;
+        cache.match(u).then(function(hit){
+          if(hit){ pending--; maybeDone(); fire(); return; }
+          fetch(u).then(function(res){
+            if(res&&res.ok){ try{ cache.put(u,res); }catch(e){} }
+            pending--; maybeDone(); fire();
+          }).catch(function(){ pending--; maybeDone(); fire(); });
+        }).catch(function(){ pending--; maybeDone(); fire(); });
+      }
+    }
+    function maybeDone(){ if(!finished && i>=urls.length && pending===0){ finished=true; done(); } }
+    fire();
   }).catch(function(){ done(); });
 }
 
