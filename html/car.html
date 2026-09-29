@@ -170,8 +170,12 @@ a{color:inherit;text-decoration:none}
 .stat .v{font-size:16px;font-weight:700;margin-top:3px}
 .stat .v small{font-size:11px;font-weight:500;color:var(--muted)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12.5px;line-height:1.7}
-.kv .k{color:var(--muted);white-space:nowrap}
+.kv .k{color:var(--muted);white-space:normal;word-break:break-all;max-width:16em}
 .kv .v{color:var(--ink);word-break:break-all}
+@media(max-width:900px){
+  .kv{grid-template-columns:1fr;gap:2px 0}
+  .kv .k{max-width:none;font-weight:600;margin-top:4px}
+}
 
 /* ---------- 大招 / SP ---------- */
 .ult-head{display:flex;gap:12px;align-items:center;margin-bottom:12px}

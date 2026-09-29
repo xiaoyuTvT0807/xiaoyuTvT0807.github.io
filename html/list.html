@@ -294,7 +294,12 @@ html.embedded .sel[data-kind="ver"]{display:none}
   color:var(--muted);font-size:10px;font-weight:600;vertical-align:1px;cursor:help}
 .node .nv{color:var(--ink-2)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px}
-.kv .k{color:var(--muted);font-size:12px}
+.kv .k{color:var(--muted);font-size:12px;white-space:normal;word-break:break-all;max-width:16em}
+.kv .v{word-break:break-all}
+@media(max-width:900px){
+  .kv{grid-template-columns:1fr;gap:2px 0}
+  .kv .k{max-width:none;font-weight:600;margin-top:4px}
+}
 .chips-shapes{display:flex;gap:8px;flex-wrap:wrap}
 .shape{width:60px;padding:7px 4px 5px;border-radius:var(--radius-sm);background:var(--surface-2);
   border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px}
