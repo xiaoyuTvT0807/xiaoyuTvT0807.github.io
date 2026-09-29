@@ -833,8 +833,11 @@ function bindSelects(){
     });
   });
 }
+/* 每次渲染前都从 localStorage 同步一次排序，返回/重载后仍保持用户上次的选择 */
+function syncSort(){ try{ const _s=localStorage.getItem('va_sort'); if(SORTS.indexOf(_s)>=0) sortBy=_s; }catch(e){} }
 /* 完整渲染：工具栏 + 网格（切换模块 / 改筛选 / 改排序时调用） */
 function renderCards(){
+  syncSort();
   const items=computeItems();
   mainEl.innerHTML='<div class="toolbar">'+
       '<h2>车辆 <span class="count">'+items.length+' / '+CARS.length+'</span></h2>'+
@@ -1043,6 +1046,15 @@ function setVer(v){
 /* 外壳通知子页切换版本 */
 addEventListener('message',function(e){
   if(e.data && e.data.type==='setVersion') setVer(e.data.v);
+});
+
+/* 从详情返回列表(浏览器后退/bfcache 恢复)时,若排序被重置则按已存选择刷新 */
+addEventListener('pageshow',function(e){
+  if(!e.persisted) return;
+  try{
+    const _s=localStorage.getItem('va_sort');
+    if(SORTS.indexOf(_s)>=0 && _s!==sortBy){ sortBy=_s; renderCards(); }
+  }catch(err){}
 });
 
 /* ---------- 入口（异步：先按版本加载索引） ---------- */
