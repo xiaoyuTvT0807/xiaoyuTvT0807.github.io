@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>版本对比 · 数据模块</title>
+<style>
+:root{
+  --bg:#f3f4f7;--surface:#fff;--ink:#23272f;--ink-2:#5b626e;--muted:#9aa1ad;
+  --line:rgba(35,39,47,0.08);--line-2:rgba(35,39,47,0.13);
+  --accent:#6d5efc;--accent-ink:#5a45f5;--accent-soft:rgba(109,94,252,0.10);
+  --green:#16a34a;--green-soft:rgba(22,163,74,.10);
+  --radius:16px;--radius-sm:10px;
+  --sh-1:0 1px 2px rgba(35,39,47,.04),0 1px 3px rgba(35,39,47,.05);
+  --sh-2:0 10px 28px rgba(35,39,47,.10),0 2px 6px rgba(35,39,47,.05);
+  --sh-3:0 18px 44px rgba(35,39,47,.14);
+  --font:'PingFang SC','Microsoft YaHei',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);overflow:auto;-webkit-font-smoothing:antialiased;padding-bottom:60px}
+::selection{background:rgba(109,94,252,.16);color:var(--accent-ink)}
+.main{padding:22px 26px 56px;max-width:1100px;margin:0 auto}
+
+/* 顶栏 */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:16px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1);margin-bottom:18px}
+.toolbar h2{font-size:18px;font-weight:700;flex:0 0 auto;white-space:nowrap}
+.toolbar .hint{font-size:11.5px;color:var(--muted);margin-left:2px;white-space:nowrap}
+
+.vpick{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+.vpick .lbl{font-size:12px;color:var(--muted);flex:0 0 auto}
+.vpick select{padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--line-2);background:#fff;
+  color:var(--ink);font-size:13px;outline:none;font-family:inherit;cursor:pointer}
+.vpick select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.vpick .arr{color:var(--muted);font-size:13px}
+
+.vbtn{flex:0 0 auto;padding:9px 20px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;
+  font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(109,94,252,.3);transition:.15s}
+.vbtn:hover{filter:brightness(1.06)}
+.vbtn:disabled{opacity:.5;cursor:default}
+
+/* 文件卡片 */
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1);margin-bottom:14px;overflow:hidden}
+.fhd{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none;transition:.15s}
+.fhd:hover{background:#f7f8fa}
+.fhd .t{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.fhd .t .tag{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--green-soft);color:var(--green);font-weight:700;white-space:nowrap}
+.fhd .tag.zero{background:#f1f2f5;color:var(--muted)}
+.fhd .ct{font-size:12px;color:var(--muted);margin-left:4px}
+.fhd .ar{margin-left:auto;color:var(--muted);font-size:10px;transition:transform .2s}
+.fcard.open .fhd .ar{transform:rotate(90deg)}
+.fbd{display:none;padding:4px 18px 16px}
+.fcard.open .fbd{display:block}
+
+.newlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.nrow{display:flex;align-items:center;gap:9px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:var(--radius-sm);background:#fbfbfd}
+.nrow .id{font-family:ui-monospace,monospace;font-size:11px;color:var(--green);background:var(--green-soft);
+  padding:2px 7px;border-radius:6px;font-weight:700;flex:0 0 auto}
+.nrow .nm{font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.schips{flex:0 0 auto;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--sh-1)}
+.schips .n{font-size:22px;font-weight:800;color:var(--ink)}
+.schips .n.add{color:var(--green)}
+.schips .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+.loading,.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:48px 20px;color:var(--ink-2);text-align:center;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-1)}
+.empty .big{font-size:15px;font-weight:600}
+
+@media (max-width:700px){.main{padding:16px 14px 48px}.vpick{margin-left:0;width:100%}.toolbar .hint{display:none}}
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="toolbar">
+    <h2>版本对比<span class="hint">对比两个版本最终 JSON 的新增内容</span></h2>
+    <div class="vpick">
+      <span class="lbl">旧版本</span>
+      <select id="selA"></select>
+      <span class="arr">→</span>
+      <span class="lbl">新版本</span>
+      <select id="selB"></select>
+      <button class="vbtn" id="goBtn">开始对比</button>
+    </div>
+  </div>
+  <div id="body"></div>
+  <div class="loading" id="wait">正在载入数据…</div>
+</main>
+
+<script src="assets/preload.js"></script>
+<script>
+(function(){
+'use strict';
+if(window.parent!==window) document.documentElement.classList.add('embedded');
+
+var VERSIONS=[
+  {id:'29836883',label:'29836883'},
+  {id:'29842023',label:'29842023'}
+];
+var DEFAULT_VER='29842023';
+
+function getDef(){
+  try{ return localStorage.getItem('va_ver')||DEFAULT_VER; }catch(e){ return DEFAULT_VER; }
+}
+function verTime(id){
+  var n=Number(id); if(!isFinite(n)||n<=0) return '';
+  var d=new Date(n*60000),p=function(v){return String(v).padStart(2,'0')};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);});}
+
+/* 每个数据文件的读取项：title + 提取新增条目的可读名称 */
+var FILES=[
+  {file:'vehicles.json',title:'车辆', getId:function(k,r){return k;}, getName:function(k,r){
+      var g=r[k]; g=g&&g['车辆档案']?g['车辆档案']:g;
+      return g&&g['基础']?g['基础']['名称']:null; }},
+  {file:'tracks.json',title:'地图', getId:function(k,r){return k;}, getName:function(k,r){return r[k]&&r[k]['名称'];}},
+  {file:'chips.json',title:'芯片', getId:function(k,r){return k;}, getName:function(k,r){
+      var c=r[k]; c=c&&c['芯片档案']?c['芯片档案']:c;
+      return c&&c['基础']?c['基础']['名称']:null; }},
+  {file:'items.json',title:'道具', array:true, getName:function(r){return r.name;}},
+  {file:'activities.json',title:'活动', getId:function(k,r){return k;}, getName:function(k,r){return r[k]&&r[k]['名称'];}},
+  {file:'titles.json',title:'称号', getId:function(k,r){return k;}, getName:function(k,r){return r[k]&&r[k]['名称'];}},
+  {file:'street_god.json',title:'街头车神', getId:function(k,r){return k;}, getName:function(k,r){
+      var g=r[k]; return g?(String(g['期次']||'')+(g['地图']?' · '+g['地图']:'')):null; }},
+  {file:'season_activities.json',title:'赛季活动', getId:function(k,r){return k;}, getName:function(k,r){return r[k]&&r[k]['赛季'];}},
+  {file:'game_intro.json',title:'游戏介绍', getId:function(k,r){return k;}, getName:function(k,r){
+      var g=r[k]; if(!g)return null; var t=g['标题'];
+      return (t&&t[0])||g['顶部标题']||null; }},
+  {file:'balance_updates.json',title:'平衡性更新', getId:function(k,r){return k;}, getName:function(k,r){
+      var g=r[k]; var t=g&&g['标题']; return (t&&t[0])||(g&&g['版本号'])||null; }}
+];
+
+/* 数据在 ../ace/<版本>/；与 list.html 等可靠页面同款的相对路径 + 原生 fetch 方案 */
+function dataUrl(ver,f){ return '../ace/'+ver+'/'+f; }
+var _fetch=fetch;
+
+/* 版本下拉排序：最新在前 */
+var selA=document.getElementById('selA'), selB=document.getElementById('selB');
+function fillSel(){
+  var sorted=VERSIONS.slice().sort(function(a,b){return Number(b.id)-Number(a.id);});
+  (function(sel,def){
+    sel.innerHTML=sorted.map(function(v){
+      return '<option value="'+esc(v.id)+'"'+(v.id===def?' selected':'')+'>'+esc(v.label)+' · '+esc(verTime(v.id).slice(0,10))+'</option>';
+    }).join('');
+  })(selA, VERSIONS[0].id);
+  (function(sel,def){
+    sel.innerHTML=sorted.map(function(v){
+      return '<option value="'+esc(v.id)+'"'+(v.id===def?' selected':'')+'>'+esc(v.label)+' · '+esc(verTime(v.id).slice(0,10))+'</option>';
+    }).join('');
+  })(selB, getDef());
+}
+fillSel();
+
+var body=document.getElementById('body'), wait=document.getElementById('wait');
+wait.style.display='none';
+
+/* 计算单文件新增：返回 [{id,name}] */
+function diffFile(cfg,A,B){
+  var av=A[cfg.file], bv=B[cfg.file];
+  if(!av||!bv) return {a:0,b:0,added:[]};
+  var out=[];
+  if(cfg.array){
+    var aids={}, barr=Array.isArray(bv)?bv:Object.keys(bv).map(function(k){return bv[k];});
+    (Array.isArray(av)?av:Object.keys(av).map(function(k){return av[k];})).forEach(function(x){aids[x.id]=1;});
+    barr.forEach(function(x){
+      if(x&&!aids[x.id]){ out.push({id:x.id,name:cfg.getName(x)}); }
+    });
+    return {a:(Array.isArray(av)?av.length:Object.keys(av).length), b:barr.length, added:out};
+  }
+  var ak={},bk=0;
+  Object.keys(av).forEach(function(k){ak[k]=1;});
+  var bkeys=Object.keys(bv);
+  bkeys.forEach(function(k){ if(!ak[k]){ out.push({id:cfg.getId(k,bv),name:cfg.getName(k,bv)}); } });
+  return {a:Object.keys(av).length, b:bkeys.length, added:out};
+}
+
+function cardHtml(cfg,r){
+  var has=r.added.length>0;
+  var rows=r.added.map(function(x){
+    return '<div class="nrow"><span class="id">'+esc(x.id)+'</span><span class="nm" title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</span></div>';
+  }).join('');
+  return '<div class="fcard'+(has?' open':'')+'"><div class="fhd">'+
+    '<span class="t">'+esc(cfg.title)+
+      (has?'<span class="tag">+'+r.added.length+' 新增</span>':'<span class="tag zero">无新增</span>')+'</span>'+
+    '<span class="ct">'+r.a+' → '+r.b+'</span>'+
+    '<span class="ar">▶</span></div>'+
+    (has?'<div class="fbd"><div class="newlist">'+rows+'</div></div>':'')+
+    '</div>';
+}
+
+function run(){
+  var va=selA.value, vb=selB.value;
+  if(!va||!vb){ return; }
+  wait.style.display='flex'; body.innerHTML='';
+  Promise.all(FILES.map(function(cfg){
+    return Promise.all([
+      _fetch(dataUrl(va,cfg.file)).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      _fetch(dataUrl(vb,cfg.file)).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+    ]).then(function(rs){ return {cfg:cfg, r:diffFile(cfg,{file:cfg.file},rs[0],rs[1])}; });
+  })).then(function(items){
+    wait.style.display='none';
+    var totalA=0,totalB=0,totalAdd=0;
+    items.forEach(function(x){ totalA+=x.r.a; totalB+=x.r.b; totalAdd+=x.r.added.length; });
+    body.innerHTML=
+      '<div class="summary">'+
+        '<div class="schips"><div class="n">'+esc(va.slice(-5))+'</div><div class="l">旧版本条目</div></div>'+
+        '<div class="schips"><div class="n add">'+esc(vb.slice(-5))+'</div><div class="l">新版本条目</div></div>'+
+        '<div class="schips"><div class="n add">+'+totalAdd+'</div><div class="l">合计新增</div></div>'+
+      '</div>'+
+      items.map(function(x){return cardHtml(x.cfg,x.r);}).join('');
+  }).catch(function(err){
+    wait.style.display='none';
+    body.innerHTML='<div class="empty"><div class="big">对比失败</div><div>'+esc((err&&err.message)||err)+'</div></div>';
+  });
+}
+document.getElementById('goBtn').addEventListener('click',run);
+run();
+})();
+</script>
+</body>
+</html>
