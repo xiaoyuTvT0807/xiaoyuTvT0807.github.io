@@ -115,8 +115,16 @@ const MODS={
     card:r=>({id:r.id,name:r.name,rarity:r.rarityLabel||'',icon:r.icon||'',type:r.typeGroup||''}),
     filters:[{key:'品质',get:r=>r.rarityLabel||''},{key:'类别',get:r=>r.typeGroup||''}]},
   game_intro:{file:'game_intro.json',title:'游戏介绍',unit:'篇',kind:'read',sortRaw:(a,b)=>Number(b['数据ID'])-Number(a['数据ID']),
-    head:r=>({id:r['数据ID'],name:(r['标题']||[])[0]||('#'+r['数据ID']),sub:'编号 '+r['数据ID']+' · '+((r['标题']||[]).length)+' 节'}),
-    sections:r=>{const T=r['标题']||[],B=r['说明']||[];return T.map((t,i)=>({title:t,body:[B[i]]}))},
+    head:r=>({id:r['数据ID'],
+      name:(r['标题']||[])[0]||r['顶部标题']||('#'+r['数据ID']),
+      sub:'编号 '+r['数据ID']+' · '+((r['标题']||[]).length||(r['说明']?1:0))+' 节'}),
+    sections:r=>{
+      /* 部分词条条目只有「顶部标题」而无「标题」：回退到顶部标题，保证有说明时能显示内容 */
+      const T=r['标题']||[],B=r['说明']||[];
+      const list=T.slice();
+      if(!list.length && B.length) list.push(r['顶部标题']||'');
+      return list.map((t,i)=>({title:t,body:[B[i]]}));
+    },
     filters:[]},
   balance_updates:{file:'balance_updates.json',title:'平衡性更新',unit:'个',kind:'read',sortRaw:(a,b)=>Number(b['版本ID'])-Number(a['版本ID']),
     aux:['street_god.json'],   /* 借街头车神的赛季起止推算真实日期 */
