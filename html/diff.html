@@ -245,16 +245,14 @@ input,textarea{touch-action:manipulation}
   <div id="body"></div>
 </main>
 
+<script src="assets/preload.js?v=20291002"></script>
 <script type="module">
 import{D as jdpCreate, d as dmp, f as htmlFmt}from'./assets/vendor-diff.js?v=20290929';
 
 (function(){
 'use strict';
-var VERSIONS=[
-  {id:'29836883',label:'29836883'},
-  {id:'29842023',label:'29842023'}
-];
-var DEFAULT_VER='29842023';
+var VERSIONS=(window.ACE_VERSIONS||[]).map(function(x){return {id:x.id,label:x.label};});
+var DEFAULT_VER=window.ACE_DEFAULT_VER||(VERSIONS[0]&&VERSIONS[0].id)||'';
 function getDef(){ try{ return localStorage.getItem('va_ver')||DEFAULT_VER; }catch(e){ return DEFAULT_VER; } }
 function verTime(id){ var n=Number(id); if(!isFinite(n)||n<=0)return ''; var d=new Date(n*60000),p=function(v){return String(v).padStart(2,'0')}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);}); }

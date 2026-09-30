@@ -23,16 +23,55 @@
      · 并发压到 2，避免占满移动端连接数；
      · 全程是「预热浏览器 HTTP 缓存」，不写 Cache API
        （避免缓存永不失效，导致更新后仍看到旧数据）。
+
+   ---------- 版本清单（v3 · 单一数据源）----------
+   以前 VERSIONS 硬编码在本文件 + 7 个页面里，共 8 份，加个新版本要改 8 处，
+   漏改就出现「数据传上去了但网站看不到」。
+   现在统一从 ace/versions.json 读取，前端零硬编码。
+   versions.json 由数据脚本 ace_full_update.py 自动登记，所以：
+       ★ 以后加新版本 → 只跑脚本，前端不用动。
+   读取方式用同步 XHR：文件仅 ~500 字节，且页面初始化时就需要版本列表
+   （CUR_VER / 下拉渲染都是同步依赖），异步 fetch 会让首屏拿不到。
+   ★ 若 versions.json 读不到（首个部署、网络异常），回退到下面的 FALLBACK，
+     保证永不空白。FALLBACK 只是保险，正常情况下不会用到。
    ============================================================ */
 (function(){
 'use strict';
 
-/* 版本清单（与各页一致） */
-var VERSIONS=[
-  {id:'29836883', dir:'../ace/29836883/'},
-  {id:'29842023', dir:'../ace/29842023/'}
+/* 兜底版本清单：仅在 ace/versions.json 拉取失败时使用。
+   正常情况请勿改这里 —— 要加版本请跑 ace_full_update.py，它会写 versions.json。 */
+var FALLBACK_VER=[
+  {id:'29836883', label:'29836883'},
+  {id:'29842023', label:'29842023'},
+  {id:'29844812', label:'29844812'}
 ];
-var DEFAULT_VER='29842023';
+
+/* 同步读取 ace/versions.json → [{id,label,...}]，失败则返回 FALLBACK_VER */
+function loadVersions(){
+  var list=null;
+  try{
+    var xhr=new XMLHttpRequest();
+    xhr.open('GET','../ace/versions.json',false);   /* false = 同步 */
+    /* ?fresh=1 时绕过缓存 */
+    var fresh=false;
+    try{ fresh=new URLSearchParams(location.search).get('fresh')==='1'; }catch(e){}
+    if(fresh) xhr.setRequestHeader('Cache-Control','no-cache');
+    xhr.send(null);
+    if(xhr.status>=200&&xhr.status<300){
+      var arr=JSON.parse(xhr.responseText);
+      if(Object.prototype.toString.call(arr)==='[object Array]'&&arr.length){
+        list=arr.filter(function(x){ return x&&x.id; }).map(function(x){
+          return {id:String(x.id), label:String(x.label||x.id)};
+        });
+      }
+    }
+  }catch(e){ list=null; }
+  if(!list||!list.length){ list=FALLBACK_VER.slice(); }
+  /* 按 id 数值降序：最新的排最前（下拉/默认都以此为准） */
+  list.sort(function(a,b){ return Number(b.id)-Number(a.id); });
+  return list;
+}
+
 
 /* 数据文件按「页面需要程度」排序。
    items 故意排在最后：它单文件 gzip 就有 663KB，
@@ -49,6 +88,16 @@ var FILES=[
   'game_intro',          /* 772KB 原始，进「游戏介绍」才用 */
   'items'                /* 9.7MB 原始 / 663KB gzip，进「图鉴」才用 */
 ];
+
+/* ---------- 版本清单：从 ace/versions.json 读，前端零硬编码 ---------- */
+var _LIST=loadVersions();
+/* 补上 dir 字段（本模块预取需要绝对相对路径），并把降序结果暴露给全局 */
+var VERSIONS=_LIST.map(function(x){
+  return {id:x.id, label:x.label, dir:'../ace/'+x.id+'/'};
+});
+var DEFAULT_VER=VERSIONS.length?VERSIONS[0].id:'';   /* 最新的排最前 */
+/* 供各页面直接复用，避免每页再写一份 */
+try{ window.ACE_VERSIONS=VERSIONS.slice(); window.ACE_DEFAULT_VER=DEFAULT_VER; }catch(e){}
 
 /* --fresh=1 时全部走网络 */
 function noStore(){

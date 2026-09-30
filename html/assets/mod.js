@@ -7,8 +7,8 @@
 'use strict';
 if(window.parent!==window) document.documentElement.classList.add('embedded');
 
-const VERSIONS=[{id:'29836883',label:'29836883',dir:'../ace/29836883/'},{id:'29842023',label:'29842023',dir:'../ace/29842023/'}];
-const DEFAULT_VER='29842023';
+const VERSIONS=(window.ACE_VERSIONS||[]).map(function(x){return {id:x.id,label:x.label,dir:x.dir};});
+const DEFAULT_VER=window.ACE_DEFAULT_VER||(VERSIONS[0]&&VERSIONS[0].id)||'';
 function getVerParam(){
   const p=new URLSearchParams(location.search);
   let v=p.get('v');
