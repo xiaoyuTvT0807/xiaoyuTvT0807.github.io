@@ -193,6 +193,10 @@ const resolveTracksUrl=v=>verCfg(v).tracks||'tracks.json';
 /* 地图图片：优先仓库 images/, 失败回退本地 ace/<版本>/map/, 再失败露占位字 */
 const IMG_CDN='images/';  // 图片已并入 acewiki/images
 const imgLocal=n=>'../ace/'+CUR_VER+'/map/'+n;
+/* ★ 图片开关：html/images/ 目前为空（841 张图已从仓库移除，待重新上传）。
+   置 false 时不生成任何图片 URL，直接走占位符 —— 避免必然 404 的请求（images/ 与 ace/<ver>/map/ 都不存在）。
+   ★ 图片重新上传后改成 true 即可全站恢复真图。 */
+const IMGS_READY=false;
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const initial=s=>{ s=String(s||'').trim(); if(!s) return '?'; return /[A-Za-z]/.test(s[0])?s[0].toUpperCase():s[0]; };
@@ -206,7 +210,7 @@ document.addEventListener('error',function(e){
   else img.remove();
 },true);
 function imgTag(file,cls){
-  if(!file) return '';
+  if(!file||!IMGS_READY) return '';
   return '<img class="'+(cls||'')+'" loading="lazy" alt="" src="'+esc(IMG_CDN+file)+'" data-fb="'+esc(imgLocal(file))+'"'+
     ' onload="this.parentNode.classList.add(\'ok\')">';
 }
@@ -395,6 +399,8 @@ function changeVer(v){
   if(!VERSIONS.some(x=>x.id===v)||v===CUR_VER) return;
   CUR_VER=v;
   try{ localStorage.setItem('va_ver',v); }catch(e){}
+  /* 新版本数据是懒加载的 → 切过来时按需补预取 */
+  if(window.AceDataCache&&AceDataCache.ensureVersion) AceDataCache.ensureVersion(v);
   if(window.parent!==window){ try{ window.parent.postMessage({type:'verChanged',v:v},'*'); }catch(e){} }
   boot();
 }

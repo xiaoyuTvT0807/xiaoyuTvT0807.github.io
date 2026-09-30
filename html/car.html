@@ -310,6 +310,10 @@ html.embedded .content{margin-left:0}
 <script>
 /* 图片已并入 acewiki/images, 随仓库部署, 不再走 jsDelivr */
 const ICON_BASE = 'images/';  // 图片已并入 acewiki/images
+/* ★ 图片开关：html/images/ 目前为空（841 张图已从仓库移除，待重新上传）。
+   置 false 时不生成任何图片 URL，直接走占位符 —— 避免必然 404 的请求。
+   ★ 图片重新上传后改成 true 即可全站恢复真图。 */
+const IMGS_READY = false;
 
 /* ---------- 版本管理 ---------- */
 /* 数据由浏览器原生 fetch 合并文件：ace/<版本>/vehicles.json */
@@ -417,11 +421,13 @@ function pic(urls, initial, cls){
          '<img src="'+esc(urls[0])+'" data-fb="'+esc(urls.slice(1).join('|'))+'" loading="lazy" decoding="async" onerror="imgFb(this)">';
 }
 function thumbUrl(t){
+  if(!IMGS_READY) return '';
   t=t||{};
   const b=t['图标b']||t['图标m']||t['图标s']; if(!b) return '';
   return ICON_BASE + b.replace(/_(?:s|b|m)\.png$/i,'_m.png');
 }
 function fullUrls(t){
+  if(!IMGS_READY) return [];
   t=t||{};
   const m=t['图标m'], b=t['图标b'], s=t['图标s'];
   const u=[];
@@ -431,7 +437,7 @@ function fullUrls(t){
   return u.filter((v,i)=>u.indexOf(v)===i);
 }
 function skinUrl(name){
-  if(!name) return '';
+  if(!IMGS_READY||!name) return '';
   const m=name.replace(/_s\.png$/i,'_m.png');
   const u=[ICON_BASE+m]; if(m!==name) u.push(ICON_BASE+name);
   return u.filter((v,i)=>u.indexOf(v)===i);
@@ -577,7 +583,7 @@ function renderInfo(c){
   const ultKV=[
   ].filter(Boolean).join('');
   html+='<div class="card"><div class="sec-title">大招</div><div class="ult-head">'+
-    '<div class="ult-ic">'+pic(uimg?[ICON_BASE+uimg]:[],(ult.名称||'?')[0])+'</div>'+
+    '<div class="ult-ic">'+pic((IMGS_READY&&uimg)?[ICON_BASE+uimg]:[],(ult.名称||'?')[0])+'</div>'+
     '<div><div class="ult-name">'+esc(ult.名称||'')+'</div>'+
     '<div class="ult-sub">'+ultSubs.join(' · ')+'</div></div></div>'+
     (ultKV?'<div class="kv">'+ultKV+'</div>':'')+
@@ -592,7 +598,7 @@ function renderInfo(c){
   if(sp){
     const simg=(sp.SP图片||{}).主图标||(sp.SP图片||{}).静态图标;
     html+='<div class="card"><div class="sec-title">SP 技能</div><div class="ult-head">'+
-      '<div class="ult-ic">'+pic(simg?[ICON_BASE+simg]:[],(sp.名称||'?')[0])+'</div>'+
+      '<div class="ult-ic">'+pic((IMGS_READY&&simg)?[ICON_BASE+simg]:[],(sp.名称||'?')[0])+'</div>'+
       '<div><div class="ult-name">'+esc(sp.名称||'')+'</div>'+
       '<div class="ult-sub">'+(sp.技能ID?'#'+esc(sp.技能ID):'')+(sp.冷却时间?' · CD '+esc(sp.冷却时间):'')+'</div></div></div>'+
       '<div class="kv">'+
@@ -808,6 +814,8 @@ function setVer(v){
   if(!VERSIONS.some(x=>x.id===v) || v===CUR_VER) return;
   CUR_VER=v;
   try{ localStorage.setItem('va_ver',v); }catch(e){}
+  /* 新版本数据是懒加载的 → 切过来时按需补预取 */
+  if(window.AceDataCache&&AceDataCache.ensureVersion) AceDataCache.ensureVersion(v);
   if(window.parent!==window){
     try{ window.parent.postMessage({type:'verChanged',v:v},'*'); }catch(e){}
   }

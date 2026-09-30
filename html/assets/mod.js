@@ -82,6 +82,10 @@ const srank=k=>{k=String(k||'');if(k.indexOf('常驻')>=0)return -1e9;const m=k.
 const RCOLOR={'普通':'#6b7280','稀有':'#2563eb','史诗':'#9333ea','传说':'#d97706','神话':'#dc2626','限定':'#0d9488'};
 const rcolor=l=>RCOLOR[l]||'#9aa1ad';
 const IMG_CDN='images/';  // 图片已并入 acewiki/images, 相对本仓库部署
+/* ★ 图片开关：html/images/ 目前为空（841 张图已从仓库移除，待重新上传）。
+   置 false 时不生成任何 <img>，避免每张卡片发一个必然 404 的请求。
+   ★ 图片重新上传后改成 true 即可全站恢复真图。 */
+const IMGS_READY=false;
 const imgLocal=n=>'../ace/'+CUR_VER+'/img/'+n;
 document.addEventListener('error',function(e){
   const img=e.target;
@@ -329,7 +333,7 @@ function render(){
 function cardHtml(c){
   return '<div class="icard" data-id="'+esc(c.id)+'" style="--q:'+rcolor(c.rarity)+'">'+
     '<div class="box"><span class="ph">'+esc(initial(c.name))+'</span>'+
-      (c.icon?'<img loading="lazy" alt="" src="'+esc(IMG_CDN+c.icon+'.png')+'" data-fb="'+esc(imgLocal(c.icon+'.png'))+'" onload="this.parentNode.classList.add(\'ok\')">':'')+
+      (c.icon&&IMGS_READY?'<img loading="lazy" alt="" src="'+esc(IMG_CDN+c.icon+'.png')+'" data-fb="'+esc(imgLocal(c.icon+'.png'))+'" onload="this.parentNode.classList.add(\'ok\')">':'')+
     '</div><div class="nm">'+esc(c.name)+'</div>'+(c.rarity?'<div class="rl">'+esc(c.rarity)+'</div>':'')+'</div>';
 }
 function actCard(c){
@@ -339,7 +343,7 @@ function actCard(c){
   const full=(r['时间']||'').replace(/\s*~\s*/,' ~ ');
   return '<div class="acard" data-id="'+esc(id)+'" style="--h:'+hueOf(r['赛季'])+'">'+
     '<div class="athumb"><span class="ph">'+esc(initial(c.name))+'</span>'+
-      '<img loading="lazy" alt="" src="'+esc(IMG_CDN+'act_'+id+'.png')+'" data-fb="'+esc(imgLocal('act_'+id+'.png'))+'" onload="this.parentNode.classList.add(\'ok\')">'+
+      (IMGS_READY?'<img loading="lazy" alt="" src="'+esc(IMG_CDN+'act_'+id+'.png')+'" data-fb="'+esc(imgLocal('act_'+id+'.png'))+'" onload="this.parentNode.classList.add(\'ok\')">':'')+
       (st?'<span class="stat '+stc+'">'+esc(st)+'</span>':'')+
     '</div>'+
     '<div class="abody"><div class="anm" title="'+esc(c.name)+'">'+esc(c.name)+'</div>'+
@@ -429,7 +433,10 @@ function bind(){
   }
 }
 document.addEventListener('click',e=>{ if(!e.target.closest('.sel')){ openDD=null; mainEl.querySelectorAll('.sel').forEach(d=>d.classList.remove('open')); } });
-function changeVer(v){ if(!VERSIONS.some(x=>x.id===v)||v===CUR_VER) return; CUR_VER=v; try{localStorage.setItem('va_ver',v)}catch(e){} boot(); }
+function changeVer(v){ if(!VERSIONS.some(x=>x.id===v)||v===CUR_VER) return; CUR_VER=v; try{localStorage.setItem('va_ver',v)}catch(e){}
+  /* 新版本数据是懒加载的 → 切过来时按需补预取 */
+  if(window.AceDataCache&&AceDataCache.ensureVersion) AceDataCache.ensureVersion(v);
+  boot(); }
 
 async function boot(){
   if(!MOD){ mainEl.innerHTML='<div class="empty"><div class="big">未知模块</div></div>'; return; }

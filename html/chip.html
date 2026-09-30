@@ -453,6 +453,8 @@ function changeVer(v){
   if(!VERSIONS.some(x=>x.id===v)||v===CUR_VER) return;
   CUR_VER=v;
   try{ localStorage.setItem('va_ver',v); }catch(e){}
+  /* 新版本数据是懒加载的 → 切过来时按需补预取 */
+  if(window.AceDataCache&&AceDataCache.ensureVersion) AceDataCache.ensureVersion(v);
   if(window.parent!==window){ try{ window.parent.postMessage({type:'verChanged',v:v},'*'); }catch(e){} }
   boot();
 }

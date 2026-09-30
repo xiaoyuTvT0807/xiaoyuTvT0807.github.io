@@ -258,6 +258,13 @@ var DEFAULT_VER='29842023';
 function getDef(){ try{ return localStorage.getItem('va_ver')||DEFAULT_VER; }catch(e){ return DEFAULT_VER; } }
 function verTime(id){ var n=Number(id); if(!isFinite(n)||n<=0)return ''; var d=new Date(n*60000),p=function(v){return String(v).padStart(2,'0')}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);}); }
+/* ★ 图片开关：html/images/ 目前为空（841 张图已从仓库移除，待重新上传）。
+   置 false 时不生成卡片图标 URL，避免必然 404 的请求。图片重新上传后改成 true 即可恢复。 */
+var IMGS_READY=false;
+function IMG_CARD(key){
+  if(!IMGS_READY) return '';
+  return '<img class="vi" loading="lazy" src="images/'+encodeURIComponent(key)+'_m.png" onerror="this.remove()" alt="">';
+}
 
 /* 数据文件定义 + 提取可读名称（用于新增/删除列表） */
 var FILES=[
@@ -390,7 +397,7 @@ function cardHtml(cfg,res,cardIdx){
         modified.map(function(x,idx){
           var n=countLeaf(x.delta);
           return '<div class="vcard"><div class="vh" data-ic="'+cardIdx+'" data-ii="'+idx+'">'+
-            '<img class="vi" src="images/'+encodeURIComponent(x.key)+'_m.png" onerror="this.style.visibility=`hidden`" alt="">'+
+            IMG_CARD(x.key)+
             '<div class="vt"><b title="'+esc(x.name||'')+'">'+esc(x.name||'（无名称）')+'</b>'+
             '<i>ID '+esc(x.key)+'</i></div>'+
             '<span class="fcount">'+n+' 处变化</span><span class="ar">▶</span></div>'+

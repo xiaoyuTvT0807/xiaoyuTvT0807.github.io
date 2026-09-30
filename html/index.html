@@ -620,10 +620,13 @@ navToggle.onclick=function(){setNav(!document.body.classList.contains('nav-open'
 navMask.onclick=function(){setNav(false);};
 addEventListener('keydown',function(e){if(e.key==='Escape')setNav(false);});
 
-/* ===== 打开网站即后台预取全部版本的数据，预览秒开 ===== */
+/* ===== 后台预取「当前版本」的数据，预热浏览器 HTTP 缓存 =====
+   只预取当前版本（另一个版本等切版本时再懒加载），且等首屏数据
+   （iframe 里的 vehicles.json）加载完、浏览器真正空闲后才启动，
+   避免和首屏抢带宽。items.json 体积过大，不在此预取，留给图鉴页按需拉。 */
 if(window.AceDataCache){
-  var _pre=(window.requestIdleCallback||function(fn){return setTimeout(fn,50)});
-  _pre(function(){ AceDataCache.preloadAll(); });
+  var _pre=(window.requestIdleCallback||function(fn){return setTimeout(fn,1500)});
+  _pre(function(){ AceDataCache.preloadVersion(AceDataCache.currentVer()); },{timeout:3000});
 }
 </script>
 </body>
