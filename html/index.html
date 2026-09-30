@@ -4,6 +4,16 @@
 <meta charset="UTF-8" data-page-node-id="SPgjdzIJZPEyLgFcf7UHd2">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="oZEu1vTb16dW0jPA4J6rMX">
 <title>车辆库</title>
+<!-- 百度统计 -->
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?98abbb90507edc65bdfb54ddc318e5e6";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
 <style>
 /* ============================================================
    设计原则（参考 2026 主流优秀站点）
@@ -570,7 +580,20 @@ function openSrc(src){
   const r=NAV_ID[src.split('?')[0]]||null;
   if(r){ const el=document.getElementById(r); if(el&&!el.checked){ el.checked=true; drawReach(el); } }
 }
-window.openCar=function(id,v){ if(v) CUR_VER=v; openSrc('car.html?id='+encodeURIComponent(id)); };
+window.openCar=function(id,v){
+  if(v && v!==CUR_VER){ CUR_VER=v; renderVer(); }
+  const src='car.html?id='+encodeURIComponent(id);
+  const cur=view.getAttribute('data-src')||'';
+  if((!v||v===CUR_VER) && cur.indexOf('car.html?')===0){
+    /* 已在车辆详情页（同版本）：不重载 iframe，让子页无刷新切换车辆，消灭加载闪烁 */
+    view.setAttribute('data-src',src);
+    const full=withVer(src);
+    try{ history.replaceState(null,'','#'+full); }catch(e){}
+    try{ view.contentWindow.postMessage({type:'showCar',id:String(id)},'*'); }catch(e){}
+    return;
+  }
+  openSrc(src);
+};
 window.openList=function(){ openSrc('list.html'); };
 
 /* ===== 版本切换：由侧栏顶部的版本下拉触发，切完重载当前模块 ===== */

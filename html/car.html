@@ -127,7 +127,7 @@ input,textarea{touch-action:manipulation}
 
 /* ---------- 布局 ---------- */
 .wrap{max-width:1180px;margin:0 auto;padding:18px 20px}
-.detail{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.detail{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px;align-items:start}
 @media(max-width:960px){ .detail{grid-template-columns:1fr} }
 .card{
   background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
@@ -278,7 +278,30 @@ html.embedded .content{margin-left:0}
     </aside>
   <div class="content">
     <main class="wrap" id="app" data-page-node-id="UeH4xLrE8LpRUZY7uUKTpL">
-      <div class="msg" data-page-node-id="B31mmJnIzQjdAJfk5SN61g">正在载入车辆数据…</div>
+      <!-- 骨架屏：与最终详情布局一致（图片/皮肤在顶，文字在下），替代纯文字加载提示 -->
+      <div class="detail">
+        <div class="card">
+          <div class="skel" style="aspect-ratio:16/10;width:100%;border-radius:10px"></div>
+          <div class="skel" style="height:12px;width:130px;margin-top:10px"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin-top:14px">
+            <div class="skel" style="aspect-ratio:1;border-radius:10px"></div>
+            <div class="skel" style="aspect-ratio:1;border-radius:10px"></div>
+            <div class="skel" style="aspect-ratio:1;border-radius:10px"></div>
+            <div class="skel" style="aspect-ratio:1;border-radius:10px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="skel" style="height:26px;width:200px"></div>
+          <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+            <div class="skel" style="height:22px;width:64px;border-radius:999px"></div>
+            <div class="skel" style="height:22px;width:52px;border-radius:999px"></div>
+            <div class="skel" style="height:22px;width:76px;border-radius:999px"></div>
+          </div>
+          <div class="skel" style="height:13px;width:100%;margin-top:14px"></div>
+          <div class="skel" style="height:13px;width:82%;margin-top:8px"></div>
+          <div class="skel" style="height:180px;margin-top:18px;border-radius:10px"></div>
+        </div>
+      </div>
     </main>
   </div>
 </div>
@@ -715,16 +738,33 @@ function renderPicker(){
 
 /* ---------- 载入 ---------- */
 let curIdx=-1;
+/* 骨架屏：与最终详情布局一致（图片/皮肤在顶，文字在下），加载时无文字、无跳动 */
+function skelPage(){
+  const mini='<div class="skel" style="aspect-ratio:1;border-radius:10px"></div>';
+  return '<div class="detail">'+
+    '<div class="card">'+
+      '<div class="skel" style="aspect-ratio:16/10;width:100%;border-radius:10px"></div>'+
+      '<div class="skel" style="height:12px;width:130px;margin-top:10px"></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin-top:14px">'+
+        mini+mini+mini+mini+'</div></div>'+
+    '<div class="card">'+
+      '<div class="skel" style="height:26px;width:200px"></div>'+
+      '<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">'+
+        '<div class="skel" style="height:22px;width:64px;border-radius:999px"></div>'+
+        '<div class="skel" style="height:22px;width:52px;border-radius:999px"></div>'+
+        '<div class="skel" style="height:22px;width:76px;border-radius:999px"></div></div>'+
+      '<div class="skel" style="height:13px;width:100%;margin-top:14px"></div>'+
+      '<div class="skel" style="height:13px;width:82%;margin-top:8px"></div>'+
+      '<div class="skel" style="height:180px;margin-top:18px;border-radius:10px"></div></div>'+
+    '</div>';
+}
 async function load(idx){
   if(idx<0||idx>=LIST.length){ renderPicker(); return; }
   curIdx=idx;
   const meta=LIST[idx];
   document.title=(meta.name||'车辆')+' · 车辆详情';
   const q=document.getElementById('q'); if(document.activeElement!==q) q.value='';
-  app.innerHTML='<div class="card"><div class="skel" style="height:28px;width:200px"></div>'+
-    '<div class="skel" style="height:16px;width:70%;margin-top:14px"></div>'+
-    '<div class="skel" style="height:16px;width:50%;margin-top:8px"></div>'+
-    '<div class="skel" style="height:180px;margin-top:18px"></div></div>';
+  app.innerHTML=skelPage();
   /* 整车档案直接取自已原生加载的合并文件（meta.file 现为车辆 ID 字符串） */
   const c=CAR_FULL[String(meta.file)];
   if(!c){
@@ -732,7 +772,7 @@ async function load(idx){
       '请确认 <code>ace/'+esc(CUR_VER)+'/vehicles.json</code> 可访问。</div>';
     return;
   }
-  app.innerHTML='<div class="detail"><div>'+renderInfo(c)+'</div><div>'+renderMedia(c)+'</div></div>';
+  app.innerHTML='<div class="detail">'+renderMedia(c)+renderInfo(c)+'</div>';
   bindMedia();
 
   try{ if(location.search.indexOf('id=')<0) history.replaceState(null,'','?id='+meta.id); }catch(e){}
@@ -773,9 +813,15 @@ function setVer(v){
   }
   init();
 }
-/* 外壳通知子页切换版本 */
+/* 外壳通知子页切换版本 / 无刷新切换车辆 */
 addEventListener('message',function(e){
-  if(e.data && e.data.type==='setVersion') setVer(e.data.v);
+  if(!e.data) return;
+  if(e.data.type==='setVersion') setVer(e.data.v);
+  else if(e.data.type==='showCar'){
+    const i=byId[String(e.data.id)];
+    if(i===undefined) return;
+    if(i!==curIdx) go(i);   // 数据已在内存，秒切
+  }
 });
 
 /* ---------- 入口 ---------- */
