@@ -49,7 +49,7 @@ function imgWebp(f){
 /* 从一条记录里按顺序挑第一个像图片文件的值 */
 function pickImg(rec){
   if(!rec||typeof rec!=='object') return '';
-  for(const k of ['图标b','图标m','图标s','图标','大图','小图','加载图资源','小地图资源','主图标']){
+  for(const k of ['图标m','图标s','图标','大图','小图','加载图资源','小地图资源','主图标']){
     const v=rec[k];
     if(typeof v==='string'&&IMG_EXT.test(v)) return v;
   }
@@ -397,7 +397,7 @@ async function loadVehicles(){
       id:id, name:b['名称']||('ID '+id), maker:b['厂商'],
       camp:b['阵营'], role:b['定位'], track:b['赛道专精'], drive:b['驱动方式'],
       grade:b['品级'], skill:b['技能简述'],
-      thumb:t['图标b']||t['图标m']||t['图标s']||'',
+      thumb:t['图标s']||t['图标m']||'',
       season:b['所属赛季']||'', get:b['获取方式']||'', date:b['注册日期']||''
     });
   });
@@ -609,7 +609,7 @@ function renderCarDetail(c){
   const b=c.基础||{}, core=c.核心性能||{}, n2o=c.氮气||{}, turbo=n2o.涡轮||{}, ult=c.大招||{}, sp=c.SP技能;
   const t=tierOf(b.品级), skins=c.车辆皮肤||[];
   const phPic='<div class="ph" style="font-size:42px;font-weight:800">'+esc(initial(b.名称))+'</div>';
-  const heroImg=(c.车辆缩略图||{})['图标b']||(c.车辆缩略图||{})['图标m']||pickImg(c);
+  const heroImg=(c.车辆缩略图||{})['图标m']||(c.车辆缩略图||{})['图标s']||pickImg(c);
 
   const mediaCol='<div class="col-media">'+
     '<div class="hero"><div class="pic" id="hero-pic">'+phPic+cimg(heroImg,b.名称,'veh')+'</div>'+
