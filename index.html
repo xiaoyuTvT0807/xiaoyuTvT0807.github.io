@@ -41,6 +41,11 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;'
    加载成功淡入盖住占位符，加载失败直接把 img 移除、露出占位符。 */
 const IMG_BASE='ace/img/';
 const IMG_EXT=/\.(png|jpe?g|webp|gif|avif|svg)$/i;
+/* 数据里多为 .png 引用，实际资源统一为 .webp，拼接前做后缀归一 */
+function imgWebp(f){
+  return (typeof f==='string'&&!f.includes('://')&&IMG_EXT.test(f))
+    ? f.replace(IMG_EXT,'.webp') : f;
+}
 /* 从一条记录里按顺序挑第一个像图片文件的值 */
 function pickImg(rec){
   if(!rec||typeof rec!=='object') return '';
@@ -61,7 +66,7 @@ function pickImg(rec){
 const IMG_NS=Object.create(null);      /* ns -> undefined未探测 / true可用 / false没图 / null探测中 */
 function cimg(file,name,ns){
   if(!file||IMG_NS[ns||'veh']!==true) return '';
-  return '<img class="cimg" src="'+esc(IMG_BASE+file)+'" alt="'+esc(name||'')+'" loading="lazy" decoding="async">';
+  return '<img class="cimg" src="'+esc(IMG_BASE+imgWebp(file))+'" alt="'+esc(name||'')+'" loading="lazy" decoding="async">';
 }
 function probeNS(ns,file){
   if(!file||IMG_NS[ns]!==undefined) return;
@@ -69,7 +74,7 @@ function probeNS(ns,file){
   const im=new Image();
   im.onload=function(){ IMG_NS[ns]=true; route(); };
   im.onerror=function(){ IMG_NS[ns]=false; };
-  im.src=IMG_BASE+file;
+  im.src=IMG_BASE+imgWebp(file);
 }
 /* 车辆：沿用旧入口名，探测 veh 命名空间 */
 function probeImages(){
@@ -731,7 +736,7 @@ function renderCarDetail(c){
       }
       im.style.opacity='0';
       im.alt=m.getAttribute('data-name')||'';
-      im.src=IMG_BASE+f;
+      im.src=IMG_BASE+imgWebp(f);
       if(im.complete&&im.naturalWidth) im.style.opacity='1';
     };
   });
