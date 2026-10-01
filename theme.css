@@ -328,9 +328,9 @@ body[data-theme] img.cimg{
   opacity:0;transition:opacity .28s ease;
   background:var(--surface);
 }
-/* 缩略图裁切填满更整齐，详情页大图保持完整不裁 */
+/* 缩略图/皮肤图保持完整显示不裁切（M 图较宽，cover 会切掉左右） */
 body[data-theme] .thumb img.cimg,
-body[data-theme] .box img.cimg{object-fit:cover}
+body[data-theme] .box img.cimg{object-fit:contain}
 body[data-theme] .hero .pic img.cimg{object-fit:contain;padding:6px}
 /* 列表行首小图标：有图才占位，没图不撑出空白 */
 body[data-theme] .row-ic{display:none}

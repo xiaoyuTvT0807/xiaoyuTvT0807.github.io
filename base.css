@@ -284,7 +284,7 @@ input,textarea{touch-action:manipulation;font-family:var(--font)}
   background:linear-gradient(90deg,var(--tier),transparent 85%);opacity:.95}
 .vcard:hover{transform:translateY(-4px);box-shadow:var(--sh-3);border-color:color-mix(in srgb,var(--tier) 40%,transparent)}
 .vcard .thumb{
-  aspect-ratio:4/2.9;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+  aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
   background:radial-gradient(120% 120% at 50% 0%,color-mix(in srgb,var(--tier) 15%,transparent),transparent 65%),
     linear-gradient(165deg,#f8f9fb,#eef0f4);
   border-bottom:1px solid var(--line);
