@@ -1,0 +1,641 @@
+/* ============================================================
+   theme.css · 方案 A｜纯净白瓷（Pure White）
+   ------------------------------------------------------------
+   目标：纯白优先，最大留白，最轻装饰。
+   · 画布 = 纯白 #ffffff（不再有灰底 + 蓝色晕染 + 工程网格）
+   · 层次只靠「1px 细线 + 极轻投影」，不靠灰阶底色
+   · 单一强调色：近黑蓝 #1f2937（克制到几乎无彩色）
+   · 稀有度色只出现在「细边/文字」上，不做大面积色块
+   · 圆角收小、投影收浅 —— 冷静、干净、无装饰
+   修复项见文件末尾「版本对比（diff）修复」区块。
+   ============================================================ */
+
+@import url("base.css");
+
+
+/* ---------- 1. 设计变量覆盖 ---------- */
+body.theme-A-zen{
+  --bg:#ffffff;
+  --bg-2:#ffffff;
+  --surface:#ffffff;
+  --surface-2:#fafbfc;
+  --surface-3:#f2f4f6;
+
+  --ink:#111827;
+  --ink-2:#4b5563;
+  --muted:#9ca3af;
+
+  --line:rgba(17,24,39,.075);
+  --line-2:rgba(17,24,39,.13);
+
+  --accent:#1f2937;
+  --accent-ink:#111827;
+  --accent-soft:rgba(31,41,55,.055);
+  --accent-dim:rgba(31,41,55,.28);
+
+  --green:#0f9d63;  --green-soft:rgba(15,157,99,.10);
+  --red:#e0403f;    --red-soft:rgba(224,64,63,.09);
+  --amber:#c2760a;  --amber-soft:rgba(194,118,10,.10);
+  --blue:#2563eb;   --blue-soft:rgba(37,99,235,.09);
+
+  --tier-1:#9ca3af; --tier-2:#2563eb; --tier-3:#7c3aed; --tier-4:#c2760a;
+
+  --radius:10px;
+  --radius-sm:7px;
+
+  --sh-1:0 1px 2px rgba(17,24,39,.035);
+  --sh-2:0 4px 14px rgba(17,24,39,.07);
+  --sh-3:0 10px 30px rgba(17,24,39,.10);
+}
+
+/* ---------- 2. 画布：纯白，去掉所有底色装饰 ---------- */
+body[data-theme]{
+  background:#ffffff;
+  display:flex;height:100vh;overflow:hidden;
+}
+/* 干掉原站的网格纹理与蓝色晕染 */
+body[data-theme]::before{display:none!important;content:none!important}
+
+/* 滚动条也去色 */
+body[data-theme] ::-webkit-scrollbar-thumb{background:rgba(17,24,39,.14)}
+body[data-theme] ::-webkit-scrollbar-thumb:hover{background:rgba(17,24,39,.28)}
+body[data-theme] .main::-webkit-scrollbar-thumb{background:rgba(17,24,39,.14)}
+body[data-theme] .sidebar::-webkit-scrollbar-thumb{background:rgba(17,24,39,.14)}
+
+/* 选中态去彩色 */
+body[data-theme] ::selection{background:rgba(31,41,55,.12);color:var(--ink)}
+
+/* ---------- 3. 侧栏：纯白实底 + 细线，不用玻璃 ---------- */
+body[data-theme] .sidebar{
+  background:#ffffff;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-right:1px solid var(--line);
+  padding:20px 16px 16px;gap:16px;
+}
+body[data-theme] .ver-box{border-bottom:1px solid var(--line);padding-bottom:15px}
+
+/* 版本按钮：做成近乎无边框的纯白块 */
+body[data-theme] .vsel-btn{
+  background:#ffffff;border:1px solid var(--line);box-shadow:none;
+  padding:9px 11px;
+}
+body[data-theme] .vsel-btn:hover{border-color:var(--line-2);background:#ffffff}
+body[data-theme] .vsel-btn .ic{
+  background:#f2f4f6;color:var(--ink-2);border-radius:5px;
+}
+body[data-theme] .vsel .arrow{font-size:9px;opacity:.65}
+
+/* 侧栏导航：选中态改为「左侧细竖线 + 深色文字」，去掉蓝色块 */
+body[data-theme] .branched-menu{
+  --bm-ink:#111827;--bm-accent:#111827;--bm-line:rgba(17,24,39,.12);
+  --bm-row:34px;--bm-indent:36px;
+}
+body[data-theme] .branched-menu::before{
+  background:linear-gradient(to bottom,rgba(17,24,39,.12) 0%,rgba(17,24,39,.12) 60%,transparent 100%);
+}
+body[data-theme] .branched-menu__head{
+  font-size:11.5px;letter-spacing:.18em;color:#9ca3af;padding:10px 0 8px;
+}
+body[data-theme] .sec-toggle:checked~.branched-menu__head{color:#111827}
+body[data-theme] .branched-menu__item{
+  border-radius:0;padding:0 8px 0 var(--bm-indent);
+  transition:color 160ms ease;
+}
+body[data-theme] .branched-menu__item:hover{background:transparent!important;color:#111827}
+body[data-theme] .item-radio:checked+.branched-menu__item{
+  background:transparent!important;color:#111827;font-weight:600;
+  box-shadow:inset 2px 0 0 #111827;
+}
+body[data-theme] .branched-menu__marker{display:none}
+body[data-theme] .branched-menu__reach{stroke:#111827;stroke-width:1.6}
+body[data-theme] .side-foot{
+  border-top:1px solid var(--line);color:#b6bcc6;font-size:10.5px;letter-spacing:.02em;
+}
+
+/* ---------- 4. 主区 / 工具栏 ---------- */
+body[data-theme] .main{padding:0 30px 52px;background:#ffffff}
+body[data-theme] .toolbar{
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  padding:15px 30px 13px;margin:0 -30px 16px;
+}
+body[data-theme] .toolbar h2{font-size:18px;font-weight:700;letter-spacing:.01em}
+body[data-theme] .toolbar h2::before{
+  width:2px;height:14px;background:#111827;box-shadow:none;border-radius:1px;
+}
+body[data-theme] .toolbar .count{
+  background:#ffffff;border:1px solid var(--line);color:#9ca3af;font-weight:500;
+}
+
+/* 下拉 / 搜索：纯白 + 细线，无投影 */
+body[data-theme] .sel{min-width:120px}
+body[data-theme] .sel-btn{
+  background:#ffffff;border:1px solid var(--line);box-shadow:none;
+  color:#4b5563;padding:7px 11px;border-radius:var(--radius-sm);
+}
+body[data-theme] .sel-btn:hover{border-color:var(--line-2);color:#111827;background:#ffffff}
+body[data-theme] .sel-btn .ic{
+  background:#f2f4f6;color:#6b7280;border-radius:5px;width:17px;height:17px;flex-basis:17px;
+}
+body[data-theme] .sel-btn:hover .ic{background:#e9ecef;color:#111827}
+body[data-theme] .sel.open .sel-btn{
+  border-color:#111827;color:#111827;box-shadow:0 0 0 3px rgba(31,41,55,.06);
+}
+body[data-theme] .sel.open .sel-btn .ic{background:#111827;color:#ffffff}
+body[data-theme] .sel[data-kind="sort"] .sel-btn{
+  background:#f7f8fa;border-color:var(--line-2);color:#111827;font-weight:600;
+}
+body[data-theme] .sel[data-kind="sort"] .sel-btn .ic{background:#e9ecef;color:#111827}
+body[data-theme] .sel-list{
+  border:1px solid var(--line-2);box-shadow:var(--sh-2);
+  background:#ffffff;backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+body[data-theme] .sel-list .opt{color:#4b5563}
+body[data-theme] .sel-list .opt:hover{background:#f4f5f7;color:#111827}
+body[data-theme] .sel-list .opt.on{color:#111827;font-weight:600}
+body[data-theme] .sel-list .opt.on::after{color:#111827}
+body[data-theme] .sel-list .opt .oi{background:#f2f4f6;color:#6b7280}
+body[data-theme] .sel-list .opt:hover .oi{background:#e9ecef;color:#111827}
+body[data-theme] .sel-list .opt.on .oi{background:#111827;color:#ffffff;box-shadow:none}
+
+body[data-theme] .search input{
+  background:#ffffff;border:1px solid var(--line);box-shadow:none;border-radius:var(--radius-sm);
+}
+body[data-theme] .search input:focus{
+  border-color:#111827;box-shadow:0 0 0 3px rgba(31,41,55,.06);
+}
+
+/* 分类 chips */
+body[data-theme] .chipbtn{
+  background:#ffffff;border:1px solid var(--line);color:#6b7280;padding:5px 13px;
+}
+body[data-theme] .chipbtn:hover{border-color:var(--line-2);color:#111827}
+body[data-theme] .chipbtn.on{background:#111827;border-color:#111827;color:#ffffff}
+
+/* ---------- 5. 卡片：纯白 + 细线，去掉顶部色条与彩色底纹 ---------- */
+body[data-theme] .grid-cards{grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:16px}
+
+body[data-theme] .vcard{
+  background:#ffffff;border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:none;transition:border-color .18s ease,box-shadow .18s ease;
+}
+/* 移除卡片顶部的品级色条 */
+body[data-theme] .vcard::before{display:none!important;content:none!important}
+/* 车辆卡是真链接 <a>，中键 / 右键复制链接 / 键盘回车都能用 */
+body[data-theme] a.vcard{display:block;text-decoration:none;color:inherit;outline:none}
+/* 键盘可达：Tab 聚焦有明确反馈，回车/空格等同于点击 */
+body[data-theme] .tap{outline:none}
+body[data-theme] a.vcard:focus-visible,
+body[data-theme] .tap:focus-visible{
+  border-color:#111827;box-shadow:0 0 0 3px rgba(31,41,55,.10);
+}
+body[data-theme] .vcard:hover{
+  transform:none;border-color:var(--line-2);box-shadow:var(--sh-2);
+}
+body[data-theme] .vcard .thumb{
+  background:#ffffff;border-bottom:1px solid var(--line);
+  aspect-ratio:4/3;
+}
+body[data-theme] .vcard .thumb .ph{
+  font-size:44px;font-weight:700;letter-spacing:0;
+  background:none;-webkit-text-fill-color:#111827;color:#111827;opacity:.10;
+}
+body[data-theme] .vcard .grade{
+  background:#ffffff;color:#6b7280;box-shadow:none;
+  border:1px solid var(--line);font-weight:600;letter-spacing:.06em;
+  font-size:10.5px;padding:2px 9px;border-radius:6px;
+}
+body[data-theme] .vcard .body{padding:14px 16px 16px}
+body[data-theme] .vcard .nm{font-size:15px;font-weight:600;letter-spacing:0}
+body[data-theme] .vcard .nm .mk{font-size:11px;color:#b6bcc6}
+body[data-theme] .vcard .tags{gap:5px;margin-top:11px}
+
+body[data-theme] .tag{
+  background:transparent;border:1px solid var(--line);color:#6b7280;
+  font-size:10.5px;padding:2px 9px;border-radius:6px;
+}
+body[data-theme] .tag.f{border-color:var(--line-2);color:#111827;font-weight:600;background:transparent}
+body[data-theme] .tag.r{background:transparent;color:#6b7280;border-color:var(--line)}
+body[data-theme] .tag.id{color:#b6bcc6;border-color:transparent;padding-left:0}
+body[data-theme] .tag.none{color:#b6bcc6;border-color:var(--line)}
+
+/* 地图卡片 */
+body[data-theme] .track{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .track:hover{transform:none;border-color:var(--line-2);box-shadow:var(--sh-2)}
+body[data-theme] .track .pic{background:#ffffff;border-bottom:1px solid var(--line)}
+body[data-theme] .track .pic .ph-ic{color:rgba(17,24,39,.22)}
+body[data-theme] .track .pic .ph{color:rgba(17,24,39,.13)}
+body[data-theme] .track .meta .tag.reg{background:#f7f8fa;color:#4b5563;border-color:var(--line)}
+body[data-theme] .track .foot b{color:#111827}
+
+/* 芯片卡片 */
+body[data-theme] .chip{background:#ffffff;border:1px solid var(--line);box-shadow:none;gap:9px}
+body[data-theme] .chip::before{display:none!important;content:none!important}
+body[data-theme] .chip:hover{transform:none;border-color:var(--line-2);box-shadow:var(--sh-2)}
+body[data-theme] .chip .glyph{background:transparent;border:1px solid var(--line);color:#4b5563}
+body[data-theme] .qbadge{
+  background:transparent;border:1px solid var(--line);color:#6b7280;font-weight:500;
+}
+body[data-theme] .chip-eff{
+  background:#fafbfc;border:1px solid var(--line);
+}
+body[data-theme] .chip-eff b{color:#111827}
+body[data-theme] .chip-eff .ph0{color:#111827}
+body[data-theme] .chip-meta .tag.sh{background:#f2f4f6;color:#4b5563;border-color:transparent}
+
+/* 图鉴卡片 */
+body[data-theme] .icard{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .icard:hover{transform:none;border-color:var(--line-2);box-shadow:var(--sh-2)}
+body[data-theme] .icard .box{background:#ffffff;border-bottom:1px solid var(--line)}
+body[data-theme] .icard .box .ph{color:rgba(17,24,39,.20)}
+body[data-theme] .icard .rl{color:#9ca3af}
+
+/* 活动卡片 */
+body[data-theme] .acard{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .acard:hover{transform:none;border-color:var(--line-2);box-shadow:var(--sh-2)}
+body[data-theme] .acard .athumb{background:#ffffff;border-bottom:1px solid var(--line)}
+body[data-theme] .acard .athumb .ph{color:rgba(17,24,39,.18)}
+body[data-theme] .acard .athumb .stat{
+  background:#ffffff!important;color:#4b5563!important;border:1px solid var(--line);
+  font-weight:600;letter-spacing:.02em;
+}
+body[data-theme] .acard .athumb .stat.on{color:#0f9d63!important;border-color:rgba(15,157,99,.35)}
+body[data-theme] .acard .athumb .stat.soon{color:#c2760a!important;border-color:rgba(194,118,10,.35)}
+body[data-theme] .acard .ameta .ai{color:#9ca3af}
+body[data-theme] .sechd{background:#ffffff;border:1px solid var(--line)}
+body[data-theme] .sechd .dot{background:#111827!important;box-shadow:none}
+
+/* 列表行 */
+body[data-theme] .row{background:#ffffff;border:1px solid var(--line);box-shadow:none;border-radius:var(--radius-sm)}
+body[data-theme] .row:hover{transform:none;border-color:var(--line-2);box-shadow:var(--sh-2)}
+body[data-theme] .row .hd .nm{font-weight:600;font-size:14px}
+
+/* 阅读类 */
+body[data-theme] .art{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .art-hd:hover{background:#fafbfc}
+body[data-theme] .art-bd .sec h4::before{content:"";display:none}
+body[data-theme] .art-bd h4{font-weight:600;letter-spacing:.02em}
+body[data-theme] .adj{background:#fafbfc;border:1px solid var(--line)}
+
+/* ---------- 6. 详情页 ---------- */
+body[data-theme] .card{background:#ffffff;border:1px solid var(--line);box-shadow:none;border-radius:var(--radius);padding:18px 20px}
+body[data-theme] .back{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .back:hover{color:#111827;border-color:var(--line-2)}
+body[data-theme] .hero{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .hero .pic{background:#ffffff;border:1px solid var(--line)}
+body[data-theme] .hero .pic .ph{background:none;-webkit-text-fill-color:#c9ced6;color:#c9ced6}
+body[data-theme] .hero-skins{background:#ffffff;border:1px solid var(--line);box-shadow:none}
+body[data-theme] .mini .box{background:#ffffff;border:1px solid var(--line)}
+body[data-theme] .mini.on .box{border-color:#111827;box-shadow:0 0 0 2px rgba(31,41,55,.07)}
+body[data-theme] .sec-title::before{background:#111827;box-shadow:none;width:2px;height:11px}
+body[data-theme] .stat{background:#fafbfc;border:1px solid var(--line)}
+body[data-theme] .node{background:#fafbfc;border-left:2px solid #111827;border-radius:0 8px 8px 0}
+body[data-theme] .node.sub{border-left-color:#d1d5db}
+body[data-theme] .desc.tech{background:#fafbfc;border:1px solid var(--line)}
+body[data-theme] .ult-ic{background:#ffffff;border:1px solid var(--line);border-radius:10px}
+body[data-theme] .ult-ic span{color:#111827!important}
+body[data-theme] .shape{background:#fafbfc;border:1px solid var(--line)}
+body[data-theme] .shape svg{stroke:#4b5563}
+body[data-theme] .chip-link{background:#f7f8fa;color:#4b5563;border:1px solid var(--line)}
+body[data-theme] .chip-link:hover{border-color:var(--line-2);color:#111827}
+body[data-theme] .chip-link.bad{background:#fdf3f3;color:#c0392b;border-color:rgba(192,57,43,.2)}
+body[data-theme] .lvpill{background:#fafbfc;border:1px solid var(--line)}
+body[data-theme] .lvpill b{color:#111827}
+
+/* ---------- 7. 弹层 ---------- */
+body[data-theme] .mask{background:rgba(17,24,39,.34);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+body[data-theme] .modal{
+  background:#ffffff;border:1px solid var(--line-2);box-shadow:var(--sh-3);border-radius:var(--radius);
+}
+body[data-theme] .mclose{background:#f7f8fa;border:1px solid var(--line);color:#9ca3af}
+body[data-theme] .mclose:hover{color:#111827;border-color:var(--line-2)}
+body[data-theme] .mkv{background:#fafbfc;border:1px solid var(--line)}
+body[data-theme] .mpic{background:#ffffff;border:1px solid var(--line);color:rgba(17,24,39,.14)}
+body[data-theme] .mhd .glyph{background:#f2f4f6!important;color:#4b5563!important}
+
+/* ---------- 7.5 图片显示 ----------
+   统一「占位打底 + 图片覆盖 + 淡入」：
+   没上传图片时显示字母占位，不会开天窗；上传后自动淡入，
+   加载失败则由 JS 把 img 移除、退回占位符。 */
+body[data-theme] .thumb,
+body[data-theme] .pic,
+body[data-theme] .athumb,
+body[data-theme] .box{position:relative}
+body[data-theme] img.cimg{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;object-position:center;
+  opacity:0;transition:opacity .28s ease;
+  background:var(--surface);
+}
+/* 缩略图裁切填满更整齐，详情页大图保持完整不裁 */
+body[data-theme] .thumb img.cimg,
+body[data-theme] .box img.cimg{object-fit:cover}
+body[data-theme] .hero .pic img.cimg{object-fit:contain;padding:6px}
+/* 列表行首小图标：有图才占位，没图不撑出空白 */
+body[data-theme] .row-ic{display:none}
+body[data-theme] .row-ic:has(img.cimg){
+  display:inline-flex;width:22px;height:22px;flex:0 0 22px;
+  border:1px solid var(--line);border-radius:5px;overflow:hidden;
+  vertical-align:-6px;margin-right:7px;background:var(--surface);
+}
+
+/* ---------- 8. 骨架屏 / 空态 / 加载 ---------- */
+body[data-theme] .empty{background:#ffffff;border:1px dashed var(--line-2)}
+body[data-theme] .empty-ic{color:#d1d5db;opacity:1}
+body[data-theme] .spin{border-color:#e9ecef;border-top-color:#111827}
+body[data-theme] .skel{background:rgba(17,24,39,.05)}
+
+/* ============================================================
+   9. 版本对比（diff）· 重构后的界面
+   ------------------------------------------------------------
+   信息架构：版本选择 → 变更汇总（可点选筛选）→ 模块筛选 → 变更卡片墙
+   排列方式：模块为可折叠分区；分区内变更项以卡片网格排列，
+            顺序固定 新增 → 删除 → 修改，左侧色条 + 类型徽标区分类型，
+            既不切三段稀疏空行，又保持「来了什么 / 走了什么 / 改了什么」的语义顺序。
+   展开方式：点卡片原地展开并跨满整行，可反复开合、可同时开多张；
+            展开后是「字段卡」网格 —— 一张卡一个字段，上旧下新。
+   显示方式：卡片正面先给 2 条「旧 → 新」预览，不点开也能扫到改了什么；
+            旧值浅红底 + 2px 删除线，新值浅绿底加粗。
+   ============================================================ */
+
+/* ---------- 顶部：版本选择与操作 ---------- */
+body[data-theme] .diff-top{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:16px;
+}
+body[data-theme] .diff-top .dtitle{
+  flex:1 1 100%;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:3px;
+}
+body[data-theme] .diff-top .dtitle h2{font-size:17px;font-weight:700;letter-spacing:.01em}
+body[data-theme] .diff-top .dtitle .sub{font-size:11.5px;color:#9ca3af}
+body[data-theme] .dvers{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+body[data-theme] .dvers .sel{min-width:152px}
+body[data-theme] .dswap{
+  width:30px;height:30px;flex:0 0 30px;border-radius:8px;line-height:1;
+  background:#ffffff;border:1px solid var(--line);color:#9ca3af;
+  font-size:13px;cursor:pointer;transition:.15s;font-family:inherit;
+}
+body[data-theme] .dswap:hover{border-color:#111827;color:#111827}
+body[data-theme] .dacts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+body[data-theme] .dact{
+  padding:6px 13px;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;
+  background:#ffffff;border:1px solid var(--line);color:#6b7280;transition:.15s;
+}
+body[data-theme] .dact:hover{border-color:#111827;color:#111827}
+
+/* ---------- 变更汇总 ---------- */
+body[data-theme] .dsum{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:14px 18px;margin-bottom:13px;
+  background:#ffffff;border:1px solid var(--line);border-radius:var(--radius);
+}
+body[data-theme] .dsum-ver{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-family:var(--num);
+}
+body[data-theme] .dsum-ver .lab{font-size:10px;letter-spacing:.14em;color:#b6bcc6;font-weight:600}
+body[data-theme] .dsum-ver b{font-size:19px;font-weight:700;color:#111827;font-variant-numeric:tabular-nums}
+body[data-theme] .dsum-ver .sub{font-size:10.5px;color:#b6bcc6}
+body[data-theme] .dsum-ver .arw{color:#c9ced6;font-size:13px;margin:0 2px}
+body[data-theme] .dsum-total{
+  display:flex;align-items:baseline;gap:5px;padding-left:18px;
+  border-left:1px solid var(--line);font-size:11.5px;color:#9ca3af;
+}
+body[data-theme] .dsum-total b{
+  font-family:var(--num);font-size:17px;font-weight:700;color:#111827;
+  font-variant-numeric:tabular-nums;line-height:1.25;
+}
+body[data-theme] .dsum-stats{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+body[data-theme] .dstat{
+  display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:84px;
+  padding:8px 14px;border-radius:9px;cursor:pointer;font-family:inherit;
+  background:#ffffff;border:1px solid var(--line);transition:.15s;
+}
+body[data-theme] .dstat b{
+  font-size:18px;font-weight:700;font-family:var(--num);
+  font-variant-numeric:tabular-nums;line-height:1.25;
+}
+body[data-theme] .dstat span{font-size:10.5px;color:#9ca3af;letter-spacing:.08em}
+body[data-theme] .dstat.add b{color:var(--green)}
+body[data-theme] .dstat.del b{color:var(--red)}
+body[data-theme] .dstat.mod b{color:var(--amber)}
+body[data-theme] .dstat.zero b{color:#c9ced6}
+body[data-theme] .dstat:hover{border-color:#111827}
+body[data-theme] .dstat.on{
+  border-color:#111827;background:#fafbfc;box-shadow:inset 0 -2px 0 #111827;
+}
+
+/* ---------- 模块筛选 + 搜索 ---------- */
+body[data-theme] .diff-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:13px}
+body[data-theme] .diff-bar .tchipbar{flex:1 1 auto;margin-bottom:0}
+body[data-theme] .tchip{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;
+  background:#ffffff;border:1px solid var(--line);color:#6b7280;font-size:12px;cursor:pointer;transition:.15s;
+}
+body[data-theme] .tchip .cnt{
+  font-family:var(--num);font-size:10px;font-weight:600;color:#6b7280;
+  background:#f2f4f6;border-radius:999px;padding:0 6px;
+}
+body[data-theme] .tchip:hover{border-color:#111827;color:#111827}
+body[data-theme] .tchip.on{
+  border-color:#111827;color:#111827;font-weight:600;box-shadow:inset 0 -2px 0 #111827;
+}
+body[data-theme] .tchip.zero{color:#b6bcc6}
+body[data-theme] .tchip.zero .cnt{color:#b6bcc6;background:#fafbfc}
+body[data-theme] .dsearch{margin-left:auto;position:relative;display:flex;align-items:center}
+body[data-theme] .dsearch input{
+  width:186px;padding:7px 12px;border-radius:8px;font-size:12.5px;font-family:inherit;
+  background:#ffffff;border:1px solid var(--line);color:#111827;outline:none;transition:.15s;
+}
+body[data-theme] .dsearch input::placeholder{color:#b6bcc6}
+body[data-theme] .dsearch input:focus{border-color:#111827;box-shadow:0 0 0 3px rgba(31,41,55,.06)}
+
+/* ---------- 模块分区 ---------- */
+body[data-theme] .dsec{
+  background:#ffffff;border:1px solid var(--line);border-radius:var(--radius);
+  margin-bottom:12px;overflow:hidden;
+}
+/* 模块分区恒展开 —— 内容本来就是给用户看的，不需要再多一次点击 */
+body[data-theme] .dsec-hd{
+  display:flex;align-items:center;gap:10px;padding:13px 16px;
+}
+body[data-theme] .dsec-t{font-size:13.5px;font-weight:700;letter-spacing:.01em}
+body[data-theme] .dsec-tags{display:flex;gap:5px;margin-left:6px;flex-wrap:wrap}
+body[data-theme] .dsec-tags i{
+  font-style:normal;font-family:var(--num);font-size:10px;font-weight:600;
+  padding:1px 6px;border-radius:4px;
+}
+body[data-theme] .dsec-tags i.add{color:var(--green);background:var(--green-soft)}
+body[data-theme] .dsec-tags i.del{color:var(--red);background:var(--red-soft)}
+body[data-theme] .dsec-tags i.mod{color:var(--amber);background:var(--amber-soft)}
+body[data-theme] .dsec-ct{
+  margin-left:auto;display:flex;align-items:baseline;gap:6px;
+  font-family:var(--num);font-size:11.5px;color:#9ca3af;font-variant-numeric:tabular-nums;
+}
+body[data-theme] .dsec-ct b{font-weight:700;color:#4b5563}
+body[data-theme] .dsec-ct .to{color:#c9ced6;font-size:10px}
+body[data-theme] .dsec-bd{padding:14px 16px;border-top:1px solid var(--line)}
+
+/* ---------- 变更卡片墙 ----------
+   网格自适应；卡片展开时跨满整行，其余卡片自动重排，视觉上就是「打开」。 */
+body[data-theme] .dgrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));
+  gap:10px;align-items:start;
+}
+body[data-theme] .dcard{
+  position:relative;background:#ffffff;border:1px solid var(--line);
+  border-radius:9px;padding:12px 13px;overflow:hidden;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+body[data-theme] .dcard.pick{cursor:pointer}
+body[data-theme] .dcard.pick:hover{border-color:var(--line-2);box-shadow:var(--sh-2)}
+/* 展开后只有头部是「收起」热区，正文区保留文本选择 */
+body[data-theme] .dcard.open{cursor:default}
+body[data-theme] .dcard.open .dcard-hd,
+body[data-theme] .dcard.open .dcard-foot,
+body[data-theme] .dcard.open .dcard-prev{cursor:pointer}
+body[data-theme] .dcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px}
+body[data-theme] .dcard.add::before{background:var(--green)}
+body[data-theme] .dcard.del::before{background:var(--red)}
+body[data-theme] .dcard.mod::before{background:var(--amber)}
+body[data-theme] .dcard.open{
+  grid-column:1/-1;border-color:var(--line-2);box-shadow:var(--sh-1);
+}
+
+/* 卡片头 */
+body[data-theme] .dcard-hd{display:flex;align-items:center;gap:8px}
+body[data-theme] .dcard-kind{
+  flex:0 0 auto;font-family:var(--num);font-size:9.5px;font-weight:700;letter-spacing:.06em;
+  padding:2px 7px;border-radius:5px;
+}
+body[data-theme] .dcard.add .dcard-kind{color:var(--green);background:var(--green-soft)}
+body[data-theme] .dcard.del .dcard-kind{color:var(--red);background:var(--red-soft)}
+body[data-theme] .dcard.mod .dcard-kind{color:var(--amber);background:var(--amber-soft)}
+body[data-theme] .dcard-nm{
+  flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+body[data-theme] .dcard-ar{
+  flex:0 0 9px;font-size:9px;color:#c9ced6;transition:transform .18s ease;line-height:1;
+}
+body[data-theme] .dcard:not(.open) .dcard-ar{transform:rotate(-90deg)}
+body[data-theme] .dcard-foot{
+  display:flex;align-items:baseline;gap:8px;margin-top:5px;
+}
+body[data-theme] .dcard-id{
+  font-family:var(--num);font-size:10.5px;color:#b6bcc6;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+body[data-theme] .dcard-n{
+  margin-left:auto;flex:0 0 auto;font-family:var(--num);font-size:10px;font-weight:600;
+  color:#6b7280;background:#f2f4f6;border-radius:999px;padding:1px 7px;
+}
+
+/* 卡片正面：修改项预览前 2 条「旧 → 新」 */
+body[data-theme] .dcard-prev{margin-top:9px;display:flex;flex-direction:column;gap:5px}
+body[data-theme] .dcard-prev .pr{display:flex;align-items:baseline;gap:6px;font-size:11px;min-width:0}
+body[data-theme] .dcard-prev .pk{
+  flex:0 0 auto;max-width:92px;color:#b6bcc6;font-family:var(--num);font-size:10px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+body[data-theme] .dcard-prev .po{
+  flex:0 1 auto;min-width:0;color:#c0392b;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-decoration:line-through;text-decoration-thickness:2px;
+  text-decoration-color:rgba(192,57,43,.55);text-decoration-skip-ink:none;
+}
+body[data-theme] .dcard-prev .pn{
+  flex:0 1 auto;min-width:0;color:#0b7a4d;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+body[data-theme] .dcard-prev .ar{color:#c9ced6;font-size:9px;flex:0 0 auto}
+body[data-theme] .dcard-prev .more{font-size:10.5px;color:#b6bcc6}
+
+/* ---------- 展开后的字段卡 ---------- */
+body[data-theme] .dcard-bd{
+  display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);
+}
+body[data-theme] .dcard.open .dcard-bd{display:block}
+body[data-theme] .dfgrp{margin-bottom:12px}
+body[data-theme] .dfgrp:last-child{margin-bottom:0}
+body[data-theme] .dfgrp-t{
+  display:flex;align-items:baseline;gap:8px;margin-bottom:8px;
+  font-size:11.5px;font-weight:700;color:#4b5563;letter-spacing:.03em;
+}
+body[data-theme] .dfgrp-t i{
+  font-style:normal;font-family:var(--num);font-size:9.5px;font-weight:600;color:#9ca3af;
+  background:#f7f8fa;border-radius:4px;padding:1px 6px;
+}
+body[data-theme] .dfgrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:8px;
+}
+body[data-theme] .dfcard{
+  background:#ffffff;border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+}
+body[data-theme] .dfcard .dk{
+  display:block;font-family:var(--num);font-size:10px;color:#b6bcc6;
+  margin-bottom:6px;word-break:break-all;
+}
+body[data-theme] .dfcard .row{display:flex;align-items:baseline;gap:7px}
+body[data-theme] .dfcard .row+.row{margin-top:5px}
+body[data-theme] .dfcard .lab{
+  flex:0 0 20px;font-size:9.5px;font-weight:700;letter-spacing:.1em;color:#c9ced6;
+}
+body[data-theme] .dfcard .dtxt{
+  flex:1 1 auto;min-width:0;border-radius:5px;padding:2px 7px;font-size:12px;
+  word-break:break-word;overflow-wrap:anywhere;
+}
+body[data-theme] .dfcard .old .dtxt{
+  color:#c0392b;background:#fdf3f3;
+  text-decoration:line-through;text-decoration-thickness:2px;
+  text-decoration-color:rgba(192,57,43,.55);text-decoration-skip-ink:none;
+}
+body[data-theme] .dfcard .new .dtxt{color:#0b7a4d;background:#f2fbf6;font-weight:600}
+body[data-theme] .dfcard .only .dtxt{color:#111827;background:#fafbfc}
+body[data-theme] .dfcard .dnil{color:#c9ced6;font-size:11px}
+
+/* ---------- 无差异空态 ---------- */
+body[data-theme] .diff-empty{
+  background:#ffffff;border:1px dashed var(--line-2);border-radius:var(--radius);
+  padding:44px 20px;text-align:center;
+}
+body[data-theme] .diff-empty .ic{font-size:26px;color:#d1d5db;margin-bottom:12px}
+body[data-theme] .diff-empty .big{font-size:15px;font-weight:600;color:#4b5563;margin-bottom:6px}
+body[data-theme] .diff-empty .s{font-size:12px;color:#b6bcc6;font-family:var(--num)}
+
+/* ---------- 搜索无命中 ---------- */
+body[data-theme] #diffNoHit{margin-top:14px}
+
+@media (max-width:640px){
+  body[data-theme] .dgrid{grid-template-columns:1fr}
+  body[data-theme] .dfgrid{grid-template-columns:1fr}
+}
+
+/* ---------- 10. 分页 / 移动端 ---------- */
+body[data-theme] .pager button{background:#ffffff;border:1px solid var(--line);color:#6b7280}
+body[data-theme] .pager button:hover:not(:disabled){border-color:#111827;color:#111827}
+
+@media (max-width:920px){
+  /* 移动端回到纵向文档流：汉堡按钮独占一行，页面整体滚动。
+     若沿用桌面的 flex 横排，nav-toggle 会作为 flex item 占掉 69px，
+     把 main 挤出视口造成横向溢出。 */
+  body[data-theme]{display:block;height:auto;min-height:100%;overflow:auto}
+  body[data-theme] .nav-toggle{width:100%}
+  body[data-theme] .main{padding:0 16px 40px;height:auto;overflow:visible}
+  body[data-theme] .toolbar{margin:0 -16px 14px;padding:12px 16px 10px}
+  body[data-theme] .sidebar{
+    background:#ffffff;backdrop-filter:none;-webkit-backdrop-filter:none;
+    border-right:1px solid var(--line);border-radius:0;
+    top:var(--nav-h);width:264px;
+  }
+  body[data-theme] .nav-toggle{
+    background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  body[data-theme] .nav-toggle .nav-ic{color:#111827}
+}
+@media (max-width:520px){
+  body[data-theme] .frow{display:block;gap:0;padding:8px 0}
+  body[data-theme] .frow .fk{flex:none;padding-top:0;margin-bottom:5px;font-size:10.5px;color:#b6bcc6}
+  body[data-theme] .frow .fv.fpair{gap:8px}
+  body[data-theme] .grid-cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+}

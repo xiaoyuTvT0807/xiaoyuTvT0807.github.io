@@ -1,683 +1,1859 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大招能量计算器</title>
-    <!-- 百度统计 -->
-    <script>
-    var _hmt = _hmt || [];
-    (function() {
-      var hm = document.createElement("script");
-      hm.src = "https://hm.baidu.com/hm.js?98abbb90507edc65bdfb54ddc318e5e6";
-      var s = document.getElementsByTagName("script")[0];
-      s.parentNode.insertBefore(hm, s);
-    })();
-    </script>
-    <style>
-        :root {
-            --primary: #4f6ef7;
-            --primary-bg: #f0f3ff;
-            --bg: #f5f6fa;
-            --card: #fff;
-            --text: #1a1d26;
-            --text-2: #5a6178;
-            --text-3: #8e95a9;
-            --border: #e8eaf0;
-            --green: #22c55e;
-            --orange: #f59e0b;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; outline:none; }
-        html,body { width:100%; height:100%; overflow:hidden; font-size:12px; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            background-image: 
-                radial-gradient(ellipse at 30% 20%, rgba(79,110,247,.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(139,92,246,.04) 0%, transparent 50%);
-            color: var(--text);
-            display: flex; flex-direction: column;
-            -webkit-font-smoothing: antialiased;
-            -webkit-user-select: none; user-select: none;
-        }
-
-        .header {
-            flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 14px; background: var(--card); border-bottom: 1px solid var(--border);
-        }
-        .header h1 { font-size:.9rem; font-weight:700; }
-        .header .sub { font-size:.6rem; color:var(--text-3); }
-
-        .tabs-bar {
-            flex-shrink: 0; padding: 6px 14px; background: var(--card); border-bottom: 1px solid var(--border);
-        }
-        .tabs {
-            display: inline-flex; gap: 2px; background: #f0f1f5;
-            padding: 3px; border-radius: 8px; position: relative;
-        }
-        .tab {
-            padding: 6px 20px; border: none; background: transparent;
-            border-radius: 6px; font-size: .75rem; color: var(--text-2);
-            cursor: pointer; font-weight: 500; position: relative; z-index: 1;
-        }
-        .tab.active { color:#fff; }
-        .tab-indicator {
-            position: absolute; height: calc(100% - 6px); top: 3px; left: 3px;
-            background: linear-gradient(135deg, var(--primary), #6b7ff7);
-            border-radius: 6px; box-shadow: 0 2px 6px rgba(79,110,247,.25);
-            transition: all .2s; z-index: 0;
-        }
-
-        .main { flex: 1; overflow: hidden; padding: 10px 14px; }
-        .mode { display: none; height: 100%; gap: 10px; }
-        .mode.active { display: grid; grid-template-columns: 1fr 1fr; }
-        @media (max-width: 700px) { .mode.active { grid-template-columns: 1fr; overflow-y: auto; } }
-
-        .col { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
-
-        .card {
-            background: var(--card); border-radius: 12px; padding: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.05); border: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .card-title {
-            font-size: .7rem; font-weight: 600; margin-bottom: 10px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .card-title::before {
-            content: ''; width: 3px; height: 12px;
-            background: linear-gradient(180deg, var(--primary), #6b7ff7);
-            border-radius: 2px;
-        }
-
-        .g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
-        .g2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-
-        .field {
-            display:flex; flex-direction:column; gap:2px;
-            padding: 5px 7px; border-radius: 8px; transition: background .15s;
-        }
-        .field.focus { background: var(--primary-bg); }
-        .field label {
-            font-size:.58rem; color:var(--text-3); font-weight:500; pointer-events: none;
-            transition: color .15s;
-        }
-        .field.focus label { color: var(--primary); font-weight: 600; }
-        .field input {
-            padding: 4px 0; border: none; border-bottom: 1px solid #eee;
-            font-size: .78rem; background: transparent; color: var(--text);
-            caret-color: var(--primary); transition: border-color .15s;
-        }
-        .field.focus input { border-color: var(--primary); }
-        .field input:focus { outline: none; }
-
-        .checks { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
-        .chk {
-            display:flex; align-items:center; gap:4px;
-            padding: 5px 9px; background: #f7f8fc; border-radius: 8px;
-            font-size: .68rem; cursor: pointer; border: 1px solid #eee; color: var(--text-2);
-        }
-        .chk:has(input:checked) {
-            background: var(--primary-bg); border-color: rgba(79,110,247,.2);
-            color: var(--primary); font-weight: 600;
-        }
-        .chk input { accent-color:var(--primary); width:13px; height:13px; }
-
-        .rlist { display:flex; flex-direction:column; gap:4px; }
-        .ritem {
-            display:flex; align-items:center; gap:8px;
-            padding: 8px 10px; border-radius: 10px; cursor: pointer;
-            font-size: .72rem; background: #f7f8fc; border: 1px solid #eee; color: var(--text-2);
-        }
-        .ritem:hover { border-color: rgba(79,110,247,.2); }
-        .ritem.active { background: var(--primary-bg); border-color: rgba(79,110,247,.25); color: var(--text); font-weight: 500; }
-        .ritem input { display:none; }
-        .ritem::before {
-            content:''; width:14px; height:14px;
-            border:2px solid #ccc; border-radius:50%; flex-shrink:0;
-        }
-        .ritem.active::before { border-color: var(--primary); border-width: 5px; }
-
-        .nitro-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:8px 0; }
-        .nitro {
-            padding: 8px 4px; text-align: center; background: #f7f8fc;
-            border-radius: 10px; cursor: pointer; border: 1.5px solid #eee;
-        }
-        .nitro.active { border-color: var(--primary); background: var(--primary-bg); }
-        .nitro .n1 { font-size:.65rem; font-weight:600; }
-        .nitro.active .n1 { color:var(--primary); }
-        .nitro .n2 { font-size:.52rem; color:var(--text-3); margin:2px 0; }
-        .nitro .n3 { font-size:.82rem; font-weight:700; color:var(--primary); }
-
-        .btns { display:flex; gap:6px; margin-top:10px; }
-        .btn {
-            flex:1; padding:8px; border:none; border-radius:10px;
-            font-size:.78rem; font-weight:600; cursor:pointer;
-        }
-        .btn-s { background: #f0f1f5; color: var(--text); border: 1px solid #e0e2e8; }
-
-        .result { flex: 1; display: flex; flex-direction: column; }
-
-        .instant-box {
-            text-align: center; padding: 24px 16px;
-            background: #f0fdf4; border-radius: 12px;
-            border: 1px solid rgba(34,197,94,.2);
-        }
-        .instant-box .icon {
-            width: 48px; height: 48px; margin: 0 auto 10px;
-            background: linear-gradient(135deg, var(--green), #4ade80);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 700; font-size: 1.2rem;
-            box-shadow: 0 4px 12px rgba(34,197,94,.25);
-        }
-        .instant-box .big { font-size: 1.6rem; font-weight: 700; color: var(--green); }
-        .instant-box .desc { font-size: .72rem; color: var(--text-2); margin-top: 6px; }
-
-        .main-stat {
-            text-align: center; padding: 18px;
-            background: linear-gradient(135deg, var(--primary), #6b7ff7);
-            border-radius: 12px; color: #fff;
-            box-shadow: 0 4px 14px rgba(79,110,247,.25);
-        }
-        .main-stat .big { font-size: 2rem; font-weight: 700; line-height: 1; }
-        .main-stat .label { font-size: .68rem; opacity: .9; margin-top: 6px; }
-
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .detail-item {
-            padding: 10px; background: #f7f8fc; border-radius: 10px; border: 1px solid #eee;
-        }
-        .detail-item .val { font-size: 1rem; font-weight: 700; color: var(--primary); }
-        .detail-item .lbl { font-size: .58rem; color: var(--text-3); margin-top: 3px; }
-
-        .diff-table { width: 100%; font-size: .65rem; border-collapse: collapse; table-layout: fixed; }
-        .diff-table th {
-            padding: 7px 8px; background: #f7f8fc; border-bottom: 1px solid #eee;
-            font-weight: 600; color: var(--text-2); text-align: left; font-size: .6rem;
-        }
-        .diff-table th:first-child { width: 60px; }
-        .diff-table th:nth-child(2) { width: 70px; }
-        .diff-table td { padding: 7px 8px; border-bottom: 1px solid #f0f1f5; text-align: left; }
-        .diff-table td:first-child { font-weight: 600; color: var(--primary); }
-        .diff-table tr:last-child td { border-bottom: none; }
-
-        .tbl-wrap {
-            overflow: auto; border-radius: 10px; border: 1px solid #eee;
-            flex: 1; min-height: 0;
-        }
-        table { width:100%; font-size:.68rem; border-collapse:collapse; }
-        th {
-            font-weight:600; padding:7px 5px; border-bottom:2px solid #eee;
-            font-size:.6rem; text-transform:uppercase; background:#f7f8fc; color:var(--text-2);
-            position:sticky; top:0; z-index:1;
-        }
-        td { padding:6px 5px; text-align:center; border-bottom:1px solid #f0f1f5; }
-        tr:last-child td { border-bottom:none; }
-        .hl { color:var(--primary); font-weight:700; }
-        .c-green { color:var(--green); font-weight:600; }
-        .c-orange { color:var(--orange); font-weight:600; }
-        .c-gray { color:var(--text-3); }
-
-        .tip {
-            margin-top:6px; padding:7px 10px;
-            background: #f7f8fc; border-radius: 8px;
-            font-size:.6rem; color:var(--text-2);
-        }
-
-        .fab {
-            position:fixed; right:12px; bottom:12px;
-            width:42px; height:42px;
-            background: linear-gradient(135deg, var(--primary), #6b7ff7);
-            border-radius: 50%; display:flex; align-items:center; justify-content:center;
-            color:#fff; cursor:pointer;
-            box-shadow: 0 4px 14px rgba(79,110,247,.3);
-            z-index:100; border:none;
-        }
-        .fab:active { transform:scale(.92); }
-
-        .drawer {
-            position:fixed; right:-260px; top:0;
-            width:240px; height:100vh; background: #fff;
-            box-shadow: -4px 0 20px rgba(0,0,0,.08);
-            z-index:99; transition:right .25s;
-            display:flex; flex-direction:column;
-            border-left: 1px solid var(--border);
-        }
-        .drawer.open { right:0; }
-        .drawer-head {
-            padding:14px; font-size:.85rem; font-weight:600;
-            border-bottom:1px solid #eee;
-            display:flex; justify-content:space-between; align-items:center;
-        }
-        .drawer-body { flex:1; overflow-y:auto; padding:10px; }
-        .h-entry {
-            padding:10px; background:#f7f8fc; border-radius:10px;
-            margin-bottom:6px; cursor:pointer; border:1px solid #eee;
-        }
-        .h-entry:hover { background:var(--primary-bg); border-color:rgba(79,110,247,.2); }
-        .h-entry .t { font-size:.6rem; color:var(--text-3); }
-        .h-entry .r { font-size:.75rem; color:var(--primary); font-weight:600; margin-top:3px; }
-
-        .backdrop {
-            position:fixed; inset:0; background:rgba(0,0,0,0);
-            z-index:98; visibility:hidden; transition:all .25s;
-        }
-        .backdrop.show { visibility:visible; background:rgba(0,0,0,.2); }
-
-        .hide { display:none!important; }
-
-        ::-webkit-scrollbar { width:4px; height:4px; }
-        ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:#ddd; border-radius:2px; }
-        ::-webkit-scrollbar-thumb:hover { background:#bbb; }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
-        input[type="number"] { -moz-appearance:textfield; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>车辆档案库</title>
+<link rel="stylesheet" href="theme.css">
 </head>
-<body>
-
-<header class="header">
-    <h1>大招能量计算器</h1>
-    <span class="sub">寒小屿 · 3892890744</span>
-</header>
-
-<div class="tabs-bar">
-    <div class="tabs" id="tabs">
-        <div class="tab-indicator" id="indicator"></div>
-        <button class="tab active" data-m="normal" data-i="0">排位</button>
-        <button class="tab" data-m="solo" data-i="1">单刷</button>
-    </div>
-</div>
-
-<div class="main">
-    <div class="mode active" id="normalMode">
-        <div class="col">
-            <div class="card">
-                <div class="card-title">基础参数</div>
-                <div class="g3">
-                    <div class="field" data-group="normal"><label>起步充能</label><input type="number" id="nStart" step="0.01" placeholder="0"></div>
-                    <div class="field" data-group="normal"><label>氮气充能</label><input type="number" id="nNitro" step="0.01" placeholder="0"></div>
-                    <div class="field" data-group="normal"><label>反制%</label><input type="number" id="nCnt" step="0.01" placeholder="0"></div>
-                    <div class="field" data-group="normal"><label>汇能%</label><input type="number" id="nHui" step="0.01" placeholder="0"></div>
-                    <div class="field" data-group="normal"><label>先机%</label><input type="number" id="nXian" step="0.01" placeholder="0"></div>
-                    <div class="field" data-group="normal"><label>释放阈值</label><input type="number" id="nMax" value="100" step="0.01"></div>
-                </div>
-                <div class="checks">
-                    <label class="chk"><input type="checkbox" id="nSpec" data-group="normal">专精+10</label>
-                    <label class="chk"><input type="checkbox" id="nJJ" data-group="normal">拒绝溢出+5%</label>
-                </div>
-                <div class="field" style="margin-top:5px" data-group="normal"><label>能量效率%</label><input type="number" id="nEff" value="0" step="0.01"></div>
-            </div>
-            <div class="card">
-                <div class="card-title">排位赋能</div>
-                <div class="rlist" id="nEmp">
-                    <label class="ritem active"><input type="radio" name="emp" value="0" checked><span>无</span></label>
-                    <label class="ritem"><input type="radio" name="emp" value="7"><span>花信风 (+7)</span></label>
-                    <label class="ritem"><input type="radio" name="emp" value="c"><span>自定义</span></label>
-                </div>
-                <div class="g2 hide" id="nCustom" style="margin-top:6px">
-                    <div class="field" data-group="normal"><label>自定义能量</label><input type="number" id="nCE" step="0.01"></div>
-                    <div class="field" data-group="normal"><label>自定义秒数</label><input type="number" id="nCS" step="0.1"></div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-title">氮气类型</div>
-                <div class="nitro-grid" id="nNitroType">
-                    <div class="nitro active" data-r="1"><div class="n1">1x6/1x5</div><div class="n2">100%</div><div class="n3" id="nv1">--</div></div>
-                    <div class="nitro" data-r="0.5"><div class="n1">2x2</div><div class="n2">50%</div><div class="n3" id="nv2">--</div></div>
-                    <div class="nitro" data-r="0.3333333333333333"><div class="n1">3x2</div><div class="n2">33%</div><div class="n3" id="nv3">--</div></div>
-                </div>
-                <div class="btns"><button class="btn btn-s" onclick="clearAll()">清空</button></div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card result" id="nResult">
-                <div class="card-title">计算结果</div>
-                <div class="instant-box hide" id="nInstant">
-                    <div class="icon">!</div>
-                    <div class="big">可秒大</div>
-                    <div class="desc">起步能量已满，无需放氮气</div>
-                </div>
-                <div class="hide" id="nNeedWrap">
-                    <div class="main-stat">
-                        <div class="big" id="nRes">0</div>
-                        <div class="label">需要氮气罐数</div>
-                    </div>
-                    <div class="detail-grid" style="margin-top:10px">
-                        <div class="detail-item"><div class="val" id="nSE">0</div><div class="lbl">起步能量</div></div>
-                        <div class="detail-item"><div class="val" id="nSig">0</div><div class="lbl">单罐能量</div></div>
-                        <div class="detail-item"><div class="val" id="nOver">0</div><div class="lbl">溢出能量</div></div>
-                        <div class="detail-item"><div class="val" id="nGap">0</div><div class="lbl">总缺口</div></div>
-                    </div>
-                    <div class="card-title" style="margin-top:12px">差额明细</div>
-                    <table class="diff-table">
-                        <thead><tr><th>差几罐</th><th>还差能量</th><th>说明</th></tr></thead>
-                        <tbody id="nDiffTbl"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mode" id="soloMode">
-        <div class="col">
-            <div class="card">
-                <div class="card-title">单刷参数</div>
-                <div class="g3">
-                    <div class="field" data-group="solo"><label>起步能量</label><input type="number" id="sStart" step="0.01"></div>
-                    <div class="field" data-group="solo"><label>氮气充能</label><input type="number" id="sNitro" step="0.01"></div>
-                    <div class="field" data-group="solo"><label>先机%</label><input type="number" id="sXian" step="0.01"></div>
-                    <div class="field" data-group="solo"><label>汇能%</label><input type="number" id="sHui" step="0.01"></div>
-                    <div class="field" data-group="solo"><label>大招阈值</label><input type="number" id="sThr" value="100" step="0.5"></div>
-                    <div class="field" data-group="solo"><label>释放恢复</label><input type="number" id="sBaseRet" value="0" step="0.1"></div>
-                </div>
-                <div class="g2" style="margin-top:6px">
-                    <div class="field" data-group="solo"><label>每N次完成</label><input type="number" id="sRetInt" value="2" min="1" step="1"></div>
-                    <div class="field" data-group="solo"><label>额外获得</label><input type="number" id="sRetAmt" value="0" step="0.1"></div>
-                </div>
-                <div class="checks" style="margin-top:8px">
-                    <label class="chk"><input type="checkbox" id="sSpec" data-group="solo">专精+10</label>
-                    <label class="chk"><input type="number" id="sMax" value="9" min="1" max="30" style="width:34px;border:none;background:0;font-size:.78rem;color:var(--text);text-align:center;padding:0" data-group="solo">个大招</label>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-title">氮气类型</div>
-                <div class="nitro-grid" id="sNitroType">
-                    <div class="nitro active" data-r="1"><div class="n1">1x6/1x5</div><div class="n2">100%</div><div class="n3" id="sv1">--</div></div>
-                    <div class="nitro" data-r="0.5"><div class="n1">2x2</div><div class="n2">50%</div><div class="n3" id="sv2">--</div></div>
-                    <div class="nitro" data-r="0.3333333333333333"><div class="n1">3x2</div><div class="n2">33%</div><div class="n3" id="sv3">--</div></div>
-                </div>
-                <div class="btns"><button class="btn btn-s" onclick="clearAll()">清空</button></div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card result" id="sResult" style="flex:1;display:flex;flex-direction:column">
-                <div class="card-title"><span>连续大招模拟</span><span id="sTotal" style="margin-left:auto;font-size:.62rem;color:var(--text-3);font-weight:400">0罐</span></div>
-                <div class="tbl-wrap" id="sTblWrap">
-                    <table>
-                        <thead><tr><th>序号</th><th>需氮气</th><th>单罐</th><th>释放</th><th>溢出</th><th>释放恢复</th><th>下次初始</th></tr></thead>
-                        <tbody id="sTbl"></tbody>
-                    </table>
-                </div>
-                <div class="tip" id="sTip"><strong>返还规则：</strong>第N次大招完成后获得额外能量，用于下一次大招初始</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<button class="fab" onclick="toggleDrawer()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+<body class="theme-A-zen" data-theme="纯净白瓷">
+<button class="nav-toggle" id="navToggle" aria-label="打开菜单">
+  <svg class="nav-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg> 菜单
 </button>
+<div class="nav-mask" id="navMask"></div>
 
-<div class="backdrop" id="bd" onclick="toggleDrawer()"></div>
+<aside class="sidebar">
+  <div class="ver-box"><div class="vsel" id="verSel"></div></div>
+  <nav class="branched-menu" id="nav"></nav>
+  <div class="side-foot" id="sideFoot">车辆档案库</div>
+</aside>
 
-<div class="drawer" id="drawer">
-    <div class="drawer-head">历史记录 <button onclick="clearHist()" style="font-size:.68rem;color:var(--text-3);background:0;border:0;cursor:pointer">清空</button></div>
-    <div class="drawer-body" id="histList"><div style="text-align:center;color:var(--text-3);padding:24px;font-size:.75rem">暂无记录</div></div>
-</div>
+<main class="main" id="main"></main>
+
+<div class="mask" id="mask"></div>
+<div class="modal" id="modal"></div>
 
 <script>
-// 原始数值显示：保留最多10位小数，去掉末尾无意义0
-function raw(n){
-    if(n===0)return'0';
-    var s=(+n).toFixed(10);
-    return s.replace(/\.?0+$/,'')
-}
-function $(id){return document.getElementById(id)}
-function v(id){return parseFloat($(id).value)||0}
-function c(id){return $(id).checked}
+(function(){
+'use strict';
+/* ============================================================
+   车辆档案库 · 单页应用外壳
+   数据全部由浏览器原生 fetch：ace/<版本>/<file>.json
+   ============================================================ */
 
-var ind=$('indicator');
-function setInd(el){
-    var i=parseInt(el.dataset.i),w=el.offsetWidth;
-    ind.style.width=w+'px';
-    ind.style.left=(i*(w+2)+3)+'px'
-}
-setInd(document.querySelector('.tab.active'));
+/* ---------- 工具 ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-$('tabs').querySelectorAll('.tab').forEach(function(t){
-    t.onclick=function(){
-        $('tabs').querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
-        document.querySelectorAll('.mode').forEach(function(x){x.classList.remove('active')});
-        t.classList.add('active');
-        setInd(t);
-        $(t.dataset.m+'Mode').classList.add('active')
+/* ---------- 图片 ----------
+   数据里只有文件名（如 10000_b.png），统一挂到 ace/img/ 下。
+   把图片放进 ace/img/ 即自动生效；没放就显示字母占位，不会开天窗。
+   加载成功淡入盖住占位符，加载失败直接把 img 移除、露出占位符。 */
+const IMG_BASE='ace/img/';
+const IMG_EXT=/\.(png|jpe?g|webp|gif|avif|svg)$/i;
+/* 从一条记录里按顺序挑第一个像图片文件的值 */
+function pickImg(rec){
+  if(!rec||typeof rec!=='object') return '';
+  for(const k of ['图标b','图标m','图标s','图标','大图','小图','加载图资源','小地图资源','主图标']){
+    const v=rec[k];
+    if(typeof v==='string'&&IMG_EXT.test(v)) return v;
+  }
+  for(const k in rec){
+    const v=rec[k];
+    if(typeof v==='string'&&IMG_EXT.test(v)) return v;
+    if(v&&typeof v==='object'&&!Array.isArray(v)){ const r=pickImg(v); if(r) return r; }
+  }
+  return '';
+}
+/* 按「命名空间」分别探测（车辆 / 地图 / 称号… 各探一次）：
+   探测通过才渲染图片，没上传图片时每个视图只多发 1 个请求，
+   不会出现几百张卡片一起 404 的情况。 */
+const IMG_NS=Object.create(null);      /* ns -> undefined未探测 / true可用 / false没图 / null探测中 */
+function cimg(file,name,ns){
+  if(!file||IMG_NS[ns||'veh']!==true) return '';
+  return '<img class="cimg" src="'+esc(IMG_BASE+file)+'" alt="'+esc(name||'')+'" loading="lazy" decoding="async">';
+}
+function probeNS(ns,file){
+  if(!file||IMG_NS[ns]!==undefined) return;
+  IMG_NS[ns]=null;
+  const im=new Image();
+  im.onload=function(){ IMG_NS[ns]=true; route(); };
+  im.onerror=function(){ IMG_NS[ns]=false; };
+  im.src=IMG_BASE+file;
+}
+/* 车辆：沿用旧入口名，探测 veh 命名空间 */
+function probeImages(){
+  const c=CAR_INDEX.find(function(x){ return x.thumb; });
+  if(c) probeNS('veh',c.thumb);
+}
+/* load / error 不冒泡，只能在捕获阶段统一接管 */
+document.addEventListener('load',function(e){
+  const t=e.target;
+  if(t&&t.tagName==='IMG'&&t.classList&&t.classList.contains('cimg')) t.style.opacity='1';
+},true);
+document.addEventListener('error',function(e){
+  const t=e.target;
+  if(t&&t.tagName==='IMG') t.remove();
+},true);
+const fmt=v=>(v===undefined||v===null||v==='')?'—':v;
+const pad2=n=>String(n).padStart(2,'0');
+/* 版本号 = Unix 时间戳的分钟数 */
+function verTime(id){
+  const n=Number(id);
+  if(!isFinite(n)||n<=0) return '';
+  const d=new Date(n*60000);
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+' '+pad2(d.getHours())+':'+pad2(d.getMinutes());
+}
+/* 富文本：游戏文本用 #rrggbb 行内着色；近白 = 恢复默认色，亮色压暗 */
+const rich=(function(){
+  const rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const lin=c=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4)};
+  const h2=v=>v.toString(16).padStart(2,'0');
+  return function(s){
+    if(s===undefined||s===null) return '';
+    const parts=String(s).split(/(#[0-9a-fA-F]{6})/);
+    let cur=null,out='';
+    for(const p of parts){
+      if(!p) continue;
+      if(/^#[0-9a-fA-F]{6}$/.test(p)){ cur=p.toLowerCase(); continue; }
+      if(!cur){ out+=esc(p); continue; }
+      let [r,g,b]=rgb(cur);
+      if(Math.min(r,g,b)>=232){ out+=esc(p); continue; }
+      let L=0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b),i=0;
+      while(L>0.72&&i<24){ r=Math.round(r*.88); g=Math.round(g*.88); b=Math.round(b*.88);
+        L=0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b); i++; }
+      out+='<span style="color:#'+h2(r)+h2(g)+h2(b)+'">'+esc(p)+'</span>';
     }
+    return out;
+  };
+})();
+const initial=s=>{s=String(s||'').trim();if(!s)return '?';return /[A-Za-z]/.test(s[0])?s[0].toUpperCase():s[0]};
+const pct=v=>(v===undefined||v===null||v==='')?null:(Math.round(v/100*100)/100)+'%';
+const RCOLOR={'普通':'#6b7280','稀有':'#2563eb','史诗':'#9333ea','传说':'#d97706','神话':'#dc2626','限定':'#0d9488'};
+const rcolor=l=>RCOLOR[l]||'#9aa1ad';
+function tierOf(g){
+  g=Number(g)||0;
+  const m={1:['普通','#9aa6bd'],2:['稀有','#3b82f6'],3:['史诗','#a855f7'],4:['传说','#f5a623']};
+  return {name:m[g]?m[g][0]:'未知',color:m[g]?m[g][1]:'#9aa6bd'};
+}
+const timeKey=r=>{const s=String((r&&r['时间'])||'');const m=s.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);return m?Date.UTC(+m[1],+m[2]-1,+m[3]):0};
+const srank=k=>{k=String(k||'');if(k.indexOf('常驻')>=0)return -1e9;const m=k.match(/(\d+)/);return m?-Number(m[1]):0};
+const hueOf=k=>{k=String(k||'');if(k.indexOf('常驻')>=0)return 268;const m=k.match(/(\d+)/);return m?(Number(m[1])*47+18)%360:210};
+function shapeSVG(name){
+  const n=String(name||''), V='viewBox="0 0 24 24"';
+  const pp=function(sides,r,off){ r=r||8.5; const p=[];
+    for(let i=0;i<sides;i++){const a=-Math.PI/2+(off||0)+i*2*Math.PI/sides;p.push((12+r*Math.cos(a)).toFixed(1)+','+(12+r*Math.sin(a)).toFixed(1));}
+    return p.join(' '); };
+  if(n.indexOf('圆')>=0)  return '<svg '+V+'><circle cx="12" cy="12" r="8.5"/></svg>';
+  if(n.indexOf('三角')>=0)return '<svg '+V+'><polygon points="'+pp(3,9)+'"/></svg>';
+  if(n.indexOf('菱形')>=0)return '<svg '+V+'><polygon points="'+pp(4,9)+'"/></svg>';
+  if(/V/i.test(n))        return '<svg '+V+'><path d="M5 5 L12 19 L19 5"/></svg>';
+  const m=n.match(/(\d+)/); const sides=m?Math.max(3,+m[1]):(n.indexOf('六')>=0?6:5);
+  const off=sides===6?Math.PI/6:0;
+  return '<svg '+V+'><polygon points="'+pp(sides,9,off)+'"/></svg>';
+}
+/* 芯片形状 → 短名 */
+const shapeShort=s=>String(s||'').replace('芯片','')||'—';
+
+/* ---------- 数据缓存：ace/<版本>/<file> ---------- */
+const DATA_CACHE=Object.create(null);
+function dataUrl(ver,file){ return 'ace/'+ver+'/'+file; }
+function fetchData(ver,file){
+  const k=ver+'|'+file;
+  if(DATA_CACHE[k]) return DATA_CACHE[k];
+  const p=fetch(dataUrl(ver,file)).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status+' · '+file); return r.json(); });
+  DATA_CACHE[k]=p;
+  return p;
+}
+let CUR_VER='';
+let VERSIONS=[];
+const AUX_CACHE={};
+
+/* ============================================================
+   版本管理（侧栏顶部）
+   ============================================================ */
+const verSel=$('verSel');
+function renderVer(){
+  const vers=VERSIONS.slice().sort((a,b)=>Number(b.id)-Number(a.id));
+  verSel.innerHTML='<button class="vsel-btn" type="button"><span class="ic">版</span>'+
+    '<span class="vtxt"><b>'+esc(CUR_VER)+'</b><i>'+esc(verTime(CUR_VER))+'</i></span>'+
+    '<span class="arrow">▼</span></button>'+
+    '<div class="vsel-list">'+vers.map(function(x){
+      const t=verTime(x.id);
+      return '<div class="opt'+(x.id===CUR_VER?' on':'')+'" data-v="'+esc(x.id)+'" title="'+esc(t)+'">'+
+        '<span>'+esc(x.label)+'</span>'+(t?'<span class="hint">'+esc(t.slice(0,10))+'</span>':'')+'</div>';
+    }).join('')+'</div>';
+}
+verSel.addEventListener('click',function(e){
+  const opt=e.target.closest('.opt');
+  if(opt){ verSel.classList.remove('open'); setVer(opt.getAttribute('data-v')); return; }
+  if(e.target.closest('.vsel-btn')) verSel.classList.toggle('open');
 });
+document.addEventListener('click',function(e){ if(!e.target.closest('#verSel')) verSel.classList.remove('open'); });
 
-document.querySelectorAll('.nitro-grid').forEach(function(g){
-    g.querySelectorAll('.nitro').forEach(function(o){
-        o.onclick=function(){
-            g.querySelectorAll('.nitro').forEach(function(x){x.classList.remove('active')});
-            o.classList.add('active');
-            triggerCalc(g.id==='nNitroType'?'normal':'solo')
-        }
-    })
-});
-
-$('nEmp').querySelectorAll('.ritem').forEach(function(r){
-    r.onclick=function(){
-        $('nEmp').querySelectorAll('.ritem').forEach(function(x){x.classList.remove('active')});
-        r.classList.add('active');
-        r.querySelector('input').checked=true;
-        $('nCustom').classList.toggle('hide',r.querySelector('input').value!=='c');
-        triggerCalc('normal')
-    }
-});
-
-document.addEventListener('focusin',function(e){
-    var f=e.target.closest('.field');
-    if(f&&f.dataset.group)f.classList.add('focus')
-});
-document.addEventListener('focusout',function(e){
-    var f=e.target.closest('.field');
-    if(f)f.classList.remove('focus')
-});
-
-var calcTimer=null;
-function triggerCalc(mode){
-    clearTimeout(calcTimer);
-    calcTimer=setTimeout(function(){
-        if(mode==='normal')calcNormal();
-        else calcSolo()
-    },80)
+/* ============================================================
+   侧栏导航（树形分支菜单）
+   ============================================================ */
+const ICONS={
+  grid:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  car:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.7-4.2A2 2 0 0 1 8.6 5.5h6.8a2 2 0 0 1 1.9 1.3L19 11"/><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></svg>',
+  chip:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>',
+  map:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.4-2.1V4L9 6.1 15 4l5.4 2.1V18L15 15.9 9 20z"/><path d="M9 6.1V20M15 4v11.9"/></svg>',
+  cal:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  season:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14-4"/><path d="M4 5v4h4"/><path d="M4 13a8 8 0 0 0 14 4"/><path d="M20 19v-4h-4"/></svg>',
+  cup:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M6 6H4a2 2 0 0 0 2 4M18 6h2a2 2 0 0 1-2 4"/></svg>',
+  item:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>',
+  medal:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l4 6 4-6"/><circle cx="12" cy="15" r="5"/></svg>',
+  book:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  patch:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M5 7h14M5 7l-2.5 6h5zM19 7l-2.5 6h5z"/></svg>',
+  cmp:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h4l-2 3 2 3H5"/><path d="M19 7h-4l2 3-2 3h4"/></svg>'
+};
+const SECTIONS=[
+  {title:'车辆库', checked:true, items:[
+    {id:'m-veh',label:'车辆总览',icon:ICONS.grid,view:'veh'},
+    {id:'m-map',label:'地图',icon:ICONS.map,view:'map'},
+    {id:'m-chip',label:'芯片',icon:ICONS.chip,view:'chip'}
+  ]},
+  {title:'活动与赛事', checked:false, items:[
+    {id:'m-act',label:'活动',icon:ICONS.cal,view:'activities'},
+    {id:'m-seact',label:'赛季活动',icon:ICONS.season,view:'season'},
+    {id:'m-sgod',label:'街头车神',icon:ICONS.cup,view:'street_god'}
+  ]},
+  {title:'图鉴', checked:false, items:[
+    {id:'m-items',label:'道具',icon:ICONS.item,view:'items'},
+    {id:'m-titles',label:'称号',icon:ICONS.medal,view:'titles'}
+  ]},
+  {title:'资料', checked:false, items:[
+    {id:'m-intro',label:'游戏介绍',icon:ICONS.book,view:'intro'},
+    {id:'m-bal',label:'平衡性更新',icon:ICONS.patch,view:'balance'}
+  ]},
+  {title:'数据模块', checked:false, items:[
+    {id:'m-cmp',label:'版本对比',icon:ICONS.cmp,view:'diff'}
+  ]}
+];
+function branchSVG(n){
+  const baseY=14+(n-1)*38;
+  let s='<path class="branched-menu__base" d="M 14 0 V '+baseY+'"></path>';
+  for(let i=0;i<n;i++){
+    const b=14+i*38, e=b+10, len=(b+Math.PI*10/2+8).toFixed(2);
+    s+='<path class="branched-menu__base" d="M 14 '+b+' A 10 10 0 0 0 24 '+e+' H 32"></path>';
+    s+='<path class="branched-menu__reach" d="M 14 0 V '+b+' A 10 10 0 0 0 24 '+e+' H 32" style="stroke-dasharray:'+len+';stroke-dashoffset:'+len+';"></path>';
+  }
+  return '<svg class="branched-menu__lines" width="40" height="'+(n*38+12)+'" aria-hidden="true">'+s+'</svg>';
 }
-document.addEventListener('input',function(e){
-    var el=e.target;
-    if(el.dataset.group)triggerCalc(el.dataset.group);
-    var f=el.closest('.field');
-    if(f&&f.dataset.group)triggerCalc(f.dataset.group)
-});
-
-/* ========== 排位模式 ========== */
-function calcNormal(){
-    var s=v('nStart'),n=v('nNitro'),cnt=v('nCnt'),hui=v('nHui'),xian=v('nXian'),
-        mx=v('nMax')||100,sp=c('nSpec'),jj=c('nJJ'),eff=v('nEff'),emp=0,
-        rd=document.querySelector('input[name="emp"]:checked');
-    if(rd)emp=rd.value==='c'?v('nCE'):(parseFloat(rd.value)||0);
-    
-    var has=s>0||n>0||xian>0||emp>0;
-    if(!has){
-        $('nInstant').classList.add('hide');
-        $('nNeedWrap').classList.add('hide');
-        $('nv1').textContent=$('nv2').textContent=$('nv3').textContent='--';
-        return
-    }
-    
-    var cm=1-cnt/100,ef=1+(jj?.05:0)+eff/100,
-        tS=s+xian*cm+emp*cm,
-        sF=(n*(1+hui/100)+(sp?10:0))*cm*ef,
-        r=parseFloat($('nNitroType').querySelector('.active').dataset.r),
-        sig=sF*r,
-        gap=Math.max(0,mx-tS),
-        can=tS>=mx,
-        need=can?0:(sig<=0?'∞':Math.ceil(gap/sig)),
-        total=tS+(need==='∞'||need===0?0:need*sig),
-        over=Math.max(0,total-mx);
-    
-    $('nv1').textContent=sF.toFixed(2);
-    $('nv2').textContent=(sF*.5).toFixed(2);
-    $('nv3').textContent=(sF*r).toFixed(2);
-    
-    if(can){
-        $('nInstant').classList.remove('hide');
-        $('nNeedWrap').classList.add('hide')
-    }else{
-        $('nInstant').classList.add('hide');
-        $('nNeedWrap').classList.remove('hide');
-        $('nRes').textContent=need;
-        $('nSE').textContent=raw(tS);
-        $('nSig').textContent=raw(sig);
-        $('nOver').textContent=raw(over);
-        $('nGap').textContent=raw(gap);
-        
-        var h='';
-        if(sig>0){
-            for(var i=1;i<=Math.min(need+2,6);i++){
-                var e=i*sig,rm=gap-e,st='';
-                if(i<need)st='还差 '+raw(Math.abs(rm));
-                else if(i===need)st='<span style="color:var(--green)">刚好满足</span>';
-                else st='<span style="color:var(--orange)">溢出 '+raw(Math.abs(rm))+'</span>';
-                h+='<tr><td>'+i+'罐</td><td>'+raw(e)+'</td><td>'+st+'</td></tr>'
-            }
-        }else h='<tr><td colspan="3" style="color:var(--orange)">氮气能量为0</td></tr>';
-        $('nDiffTbl').innerHTML=h
-    }
+function drawReach(radio){
+  const sec=radio.closest('.branched-menu__section');
+  const reaches=Array.prototype.slice.call(sec.querySelectorAll('.branched-menu__reach'));
+  reaches.forEach(function(r){r.style.strokeDashoffset=r.style.strokeDasharray;});
+  const items=Array.prototype.slice.call(sec.querySelectorAll('.branched-menu__item'));
+  const lbl=document.querySelector('label[for="'+radio.id+'"]');
+  const idx=items.indexOf(lbl);
+  if(reaches[idx]) reaches[idx].style.strokeDashoffset='0';
 }
-
-/* ========== 单刷模式 ========== */
-function calcSolo(){
-    var s=v('sStart'),n=v('sNitro'),xian=v('sXian'),hui=v('sHui'),
-        sp=c('sSpec'),thr=v('sThr')||100,mx=parseInt($('sMax').value)||9,
-        baseRet=v('sBaseRet'),retInt=parseInt(v('sRetInt'))||1,retAmt=v('sRetAmt');
-    
-    var has=s>0||n>0||xian>0||baseRet>0;
-    if(!has){
-        $('sv1').textContent=$('sv2').textContent=$('sv3').textContent='--';
-        $('sTbl').innerHTML='';
-        $('sTotal').textContent='0罐';
-        return
-    }
-    
-    var sF=n*(1+hui/100)+(sp?10:0),
-        r=parseFloat($('sNitroType').querySelector('.active').dataset.r),
-        sig=sF*r;
-    
-    $('sv1').textContent=sF.toFixed(2);
-    $('sv2').textContent=(sF*.5).toFixed(2);
-    $('sv3').textContent=(sF*r).toFixed(2);
-    
-    var html='',total=0,cur=s+xian,stop=false;
-    
-    for(var i=1;i<=mx;i++){
-        if(stop){
-            html+='<tr><td colspan="7" class="c-gray">无法继续</td></tr>';
-            break
-        }
-        
-        var need=0,rel=0,ov=0,nxt=0;
-        
-        if(cur<thr){
-            if(sig<=0){
-                need='∞';
-                stop=true
-            }else{
-                need=Math.ceil((thr-cur)/sig);
-                rel=cur+need*sig;
-                ov=Math.max(0,rel-100);
-                nxt=ov+baseRet;
-                total+=need
-            }
-        }else{
-            rel=cur;
-            ov=Math.max(0,cur-100);
-            nxt=ov+baseRet
-        }
-        
-        var gotExtra=false;
-        if(retInt>0&&i%retInt===0&&need!=='∞'){
-            nxt+=retAmt;
-            gotExtra=true
-        }
-        
-        var bonusH=gotExtra?' <span style="color:var(--primary);font-size:.58rem">+'+raw(retAmt)+'</span>':'';
-        var ovH=ov>0?'<span class="c-orange">+'+raw(ov)+'</span>':'<span class="c-gray">0</span>';
-        var retH=baseRet>0?'<span class="c-green">+'+raw(baseRet)+'</span>':'<span class="c-gray">0</span>';
-        
-        html+='<tr>'+
-            '<td class="hl">'+i+bonusH+'</td>'+
-            '<td class="hl">'+need+'</td>'+
-            '<td>'+raw(sig)+'</td>'+
-            '<td>'+raw(rel)+'</td>'+
-            '<td>'+ovH+'</td>'+
-            '<td>'+retH+'</td>'+
-            '<td class="c-green">'+raw(nxt)+'</td>'+
-        '</tr>';
-        
-        cur=nxt;
-        if(need==='∞')break
-    }
-    
-    $('sTbl').innerHTML=html;
-    $('sTotal').textContent=total+'罐'
-}
-
-function clearAll(){
-    document.querySelectorAll('input[type="number"]').forEach(function(i){
-        if(['nMax','sThr','sMax','sRetInt','sRetAmt','sBaseRet'].indexOf(i.id)===-1)i.value=''
-    });
-    document.querySelectorAll('input[type="checkbox"]').forEach(function(i){i.checked=false});
-    $('sBaseRet').value='0';
-    $('sRetInt').value='2';
-    $('sRetAmt').value='0';
-    $('nEmp').querySelectorAll('.ritem').forEach(function(r,i){
-        r.classList.toggle('active',i===0);
-        r.querySelector('input').checked=i===0
-    });
-    $('nCustom').classList.add('hide');
-    calcNormal();
-    calcSolo()
-}
-
-function save(type,res){
-    var h=JSON.parse(localStorage.getItem(K)||'[]');
-    h.unshift({t:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),type:type,res:res});
-    if(h.length>20)h.length=20;
-    localStorage.setItem(K,JSON.stringify(h));
-    render()
-}
-
-function render(){
-    var h=JSON.parse(localStorage.getItem(K)||'[]'),el=$('histList');
-    if(!h.length){
-        el.innerHTML='<div style="text-align:center;color:var(--text-3);padding:24px;font-size:.75rem">暂无记录</div>';
-        return
-    }
-    el.innerHTML=h.map(function(x,i){
-        return'<div class="h-entry" data-i="'+i+'"><div class="t">'+x.t+' · '+x.type+'</div><div class="r">'+x.res+'</div></div>'
+function buildNav(){
+  const nav=$('nav');
+  nav.innerHTML=SECTIONS.map(function(sec,si){
+    const items=sec.items.map(function(it){
+      return '<input type="radio" name="menu-item" id="'+it.id+'" class="item-radio'+((it.view==='veh')?' checked':'')+'" data-view="'+it.view+'">\n'+
+      '<label for="'+it.id+'" class="branched-menu__item">'+
+      '<span class="branched-menu__icon">'+it.icon+'</span>'+
+      '<span class="branched-menu__label">'+it.label+'</span></label>';
     }).join('');
-    el.querySelectorAll('.h-entry').forEach(function(e){
-        e.onclick=function(){
-            document.querySelector('.tab[data-m="'+({'排位':'normal','单刷':'solo'}[h[e.dataset.i].type])+'"]').click();
-            toggleDrawer()
-        }
-    })
+    return '<div class="branched-menu__section">'+
+      '<input type="checkbox" id="sec-'+si+'" class="sec-toggle"'+(sec.checked?' checked':'')+'>\n'+
+      '<span class="branched-menu__marker" aria-hidden="true"></span>\n'+
+      '<label for="sec-'+si+'" class="branched-menu__head">'+sec.title+'</label>'+
+      '<div class="branched-menu__body"><div class="branched-menu__fold"><div class="branched-menu__tree">'+
+      branchSVG(sec.items.length)+items+'</div></div></div></div>';
+  }).join('');
+  nav.querySelectorAll('.branched-menu__item').forEach(function(lbl){
+    lbl.addEventListener('click',function(){
+      const radio=document.getElementById(lbl.getAttribute('for'));
+      if(radio) drawReach(radio);
+      gotoView(radio.getAttribute('data-view'));
+      setNav(false);
+    });
+  });
 }
 
-function clearHist(){
-    localStorage.removeItem(K);
-    render()
+/* ============================================================
+   路由：hash 驱动
+   #/veh           车辆列表
+   #/veh/:id       车辆详情
+   #/map #/chip #/activities #/season #/street_god
+   #/items #/titles #/intro #/balance #/diff
+   ============================================================ */
+let currentView='veh';
+let curCarId='';
+function parseHash(){
+  const h=(location.hash||'').replace(/^#\/?/,'');
+  const parts=h.split('/').filter(Boolean);
+  return parts;
+}
+function gotoView(view,id){
+  view=view||'veh';
+  const path=id!==undefined?'#/'+view+'/'+id:('#/'+view);
+  if((location.hash||'')===path){ route(); return; }
+  location.hash=path;
+}
+function setActiveNav(view){
+  const radios=document.querySelectorAll('.item-radio');
+  radios.forEach(function(r){ r.checked=(r.getAttribute('data-view')===view); });
+  const def=document.querySelector('.item-radio:checked');
+  if(def) drawReach(def);
+}
+function route(){
+  const parts=parseHash();
+  const view=parts[0]||'veh';
+  currentView=view;
+  curCarId=parts[1]||'';
+  setActiveNav(view==='car'?'veh':view);
+  document.getElementById('main').scrollTop=0;
+  if(view==='veh') return curCarId?renderCar(curCarId):renderVehList();
+  if(view==='map') return renderMap();
+  if(view==='chip') return renderChip();
+  if(view==='diff') return renderDiff();
+  return renderMod(view);
+}
+addEventListener('hashchange',function(){ route(); probeImages(); });
+/* 首次加载没有 hashchange，这里补一次探测 */
+addEventListener('load',function(){ probeImages(); });
+/* 视图内分页 / 翻页后回到顶部，避免停在列表中段 */
+function scrollMainTop(){ const m=$('main'); if(m) m.scrollTop=0; }
+
+/* ============================================================
+   通用下拉 / 工具栏
+   ============================================================ */
+function summary(a){ return !a||!a.length?'全部':(a.length===1?a[0]:a.length+' 项'); }
+function ddHtml(key,label,items,sel,openDD){
+  const open=openDD===key;
+  const sum=summary(sel);
+  const text=sum==='全部'?label:label+'：'+sum;
+  return '<div class="sel'+(open?' open':'')+'" data-dd="'+esc(key)+'">'+
+    '<button class="sel-btn" type="button"><span class="ic">'+esc(label.slice(0,1))+'</span>'+
+      '<span>'+esc(text)+'</span><span class="arrow">▼</span></button>'+
+    '<div class="sel-list">'+items.map(function(it){
+      return '<div class="opt'+(sel.indexOf(it.v)>=0?' on':'')+'" data-k="'+esc(key)+'" data-v="'+esc(it.v)+'">'+
+        '<span>'+esc(it.n)+'</span><span class="hint">'+it.c+'</span></div>';
+    }).join('')+'</div></div>';
+}
+function searchHTML(id,ph,kw){
+  return '<div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'+
+    '<input id="'+id+'" placeholder="'+esc(ph)+'" value="'+esc(kw)+'" autocomplete="off"></div>';
+}
+function bindToolbar(el,onInput,onFilter,onSort,onModal){
+  const tb=el.querySelector('.toolbar');
+  if(tb) tb.addEventListener('click',function(e){
+    const sb=e.target.closest('.sel-btn');
+    if(sb){
+      const drop=sb.parentNode;
+      if(drop.dataset.kind==='sort'){ if(onSort) onSort(drop); return; }
+      const open=!drop.classList.contains('open');
+      tb.querySelectorAll('.sel').forEach(d=>d.classList.remove('open'));
+      if(open) drop.classList.add('open');
+      return;
+    }
+    const opt=e.target.closest('.opt');
+    if(opt&&onFilter){ onFilter(opt.dataset.k,opt.dataset.v,opt); return; }
+  });
+  const q=el.querySelector('#'+(el.dataset.qid||'q'));
+  if(q) q.addEventListener('input',function(){ if(onInput) onInput(this.value); });
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.sel')) document.querySelectorAll('.sel.open').forEach(d=>d.classList.remove('open'));
+});
+
+/* ============================================================
+   弹层
+   ============================================================ */
+const maskEl=$('mask'), modalEl=$('modal');
+function openModal(html){
+  modalEl.innerHTML=html;
+  maskEl.classList.add('open');
+  const c=modalEl.querySelector('.mclose');
+  if(c) c.onclick=closeModal;
+}
+function closeModal(){ maskEl.classList.remove('open'); modalEl.innerHTML=''; }
+maskEl.addEventListener('click',function(e){ if(e.target===maskEl) closeModal(); });
+addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal(); } });
+
+/* ============================================================
+   车辆 · 列表
+   ============================================================ */
+let CAR_FULL=Object.create(null);
+let CAR_INDEX=[];
+let vehKeyword='', vehCamp='全部', vehRole='全部', vehGrade='全部';
+const vehSorts=['ID 小→大','ID 大→小','品级 高→低','名称'];
+let vehSort='ID 小→大';
+(function(){ try{ const s=localStorage.getItem('va_sort'); if(vehSorts.indexOf(s)>=0) vehSort=s; }catch(e){} })();
+
+async function loadVehicles(){
+  if(CAR_INDEX.length) return;
+  const data=await fetchData(CUR_VER,'vehicles.json');
+  CAR_FULL=Object.create(null);
+  const list=[];
+  Object.keys(data).forEach(function(k){
+    const rec=data[k]&&data[k]['车辆档案']?data[k]['车辆档案']:data[k];
+    if(!rec||typeof rec!=='object') return;
+    const b=rec['基础']||{}, t=rec['车辆缩略图']||{};
+    const id=b['数据ID'];
+    CAR_FULL[String(id)]=rec;
+    list.push({
+      id:id, name:b['名称']||('ID '+id), maker:b['厂商'],
+      camp:b['阵营'], role:b['定位'], track:b['赛道专精'], drive:b['驱动方式'],
+      grade:b['品级'], skill:b['技能简述'],
+      thumb:t['图标b']||t['图标m']||t['图标s']||'',
+      season:b['所属赛季']||'', get:b['获取方式']||'', date:b['注册日期']||''
+    });
+  });
+  list.sort((a,b)=>(a.id||0)-(b.id||0));
+  CAR_INDEX=list;
+  const foot=$('sideFoot');
+  foot.textContent='数据 '+CUR_VER+' · '+CAR_INDEX.length+' 辆车辆 · 全站数据';
+  probeImages();
+}
+function vehItems(){
+  const kw=vehKeyword.trim().toLowerCase();
+  const list=CAR_INDEX.filter(function(c){
+    if(kw){ const hay=(c.name+' '+(c.maker||'')+' '+(c.skill||'')).toLowerCase(); if(hay.indexOf(kw)<0) return false; }
+    if(vehCamp!=='全部'&&c.camp!==vehCamp) return false;
+    if(vehRole!=='全部'&&c.role!==vehRole) return false;
+    if(vehGrade!=='全部'&&String(c.grade)!==vehGrade) return false;
+    return true;
+  });
+  const idOf=x=>Number(x.id)||0;
+  if(vehSort==='ID 小→大') list.sort((a,b)=>idOf(a)-idOf(b));
+  else if(vehSort==='ID 大→小') list.sort((a,b)=>idOf(b)-idOf(a));
+  else if(vehSort==='品级 高→低') list.sort((a,b)=>(Number(b.grade)||0)-(Number(a.grade)||0)||idOf(a)-idOf(b));
+  else list.sort((a,b)=>String(a.name).localeCompare(String(b.name),'zh'));
+  return list;
+}
+const shortIcon=v=>v==='全部'?'全':(String(v).replace(/（.*/,'').trim()[0]||'·');
+function selHTML(label,arr,cur,kind,icons,hints){
+  if(kind==='sort'){
+    const bi=icons[cur]||'⇅', next=arr[(arr.indexOf(cur)+1)%arr.length];
+    return '<div class="sel" data-kind="sort">'+
+      '<button type="button" class="sel-btn sort-toggle" data-next="'+esc(next)+'" title="当前：'+esc(cur)+'，点击切换为 '+esc(next)+'">'+
+      '<span class="ic">'+esc(bi)+'</span><span>'+esc(label+'：'+cur)+'</span><span class="arrow">⇅</span></button></div>';
+  }
+  const bi=shortIcon(cur);
+  return '<div class="sel" data-kind="'+kind+'">'+
+    '<div class="sel-btn"><span class="ic">'+esc(bi)+'</span><span>'+esc(cur==='全部'?label:label+'：'+cur)+'</span><span class="arrow">▼</span></div>'+
+    '<div class="sel-list">'+arr.map(function(v){
+      return '<div class="opt'+(v===cur?' on':'')+'" data-v="'+esc(v)+'">'+
+      '<span class="oi">'+esc(shortIcon(v))+'</span><span>'+esc(v)+'</span>'+
+      (hints&&hints[v]?'<span class="hint">'+esc(hints[v])+'</span>':'')+'</div>';
+    }).join('')+'</div></div>';
+}
+function vehCamps(){ return ['全部'].concat(Array.from(new Set(CAR_INDEX.map(c=>c.camp||'').filter(Boolean))).sort((a,b)=>a.localeCompare(b,'zh'))); }
+function vehRoles(){ return ['全部'].concat(Array.from(new Set(CAR_INDEX.map(c=>c.role||'').filter(Boolean))).sort((a,b)=>a.localeCompare(b,'zh'))); }
+function vehGrades(){ return ['全部','4','3','2','1']; }
+function vehCardHTML(c,idx){
+  const tier=tierOf(c.grade);
+  const ph='<div class="ph">'+esc(initial(c.name))+'</div>';
+  const tags='<span class="tag f">'+esc(tier.name)+'</span>'+
+    (c.role?'<span class="tag r">'+esc(c.role)+'</span>':'')+
+    (c.track?'<span class="tag r">专精 '+esc(c.track)+'</span>':'')+
+    (c.drive?'<span class="tag r">'+esc(c.drive)+'</span>':'')+
+    '<span class="tag id">#'+c.id+'</span>';
+  return '<a class="vcard" href="#/veh/'+esc(c.id)+'" data-i="'+idx+'" style="--tier:'+tier.color+'">'+
+    '<div class="thumb">'+cimg(c.thumb,c.name,'veh')+ph+'</div>'+
+    '<div class="grade">'+esc(tier.name)+'</div>'+
+    '<div class="body"><div class="nm"><span class="t">'+esc(c.name)+'</span>'+(c.maker?'<span class="mk">'+esc(c.maker)+'</span>':'')+'</div>'+
+    '<div class="tags">'+tags+'</div></div></a>';
+}
+function vehEmptyHTML(){
+  return '<div class="empty">'+
+    '<svg class="empty-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8 11h6"/></svg>'+
+    '<div class="empty-t">没有匹配的车辆</div>'+
+    '<div class="empty-s">换个关键词，或点「全部」重置筛选</div>'+
+  '</div>';
+}
+const SORT_ICON={'ID 小→大':'↑','ID 大→小':'↓','品级 高→低':'★','名称':'文'};
+const SORT_HINT={'ID 小→大':'升序','ID 大→小':'降序','品级 高→低':'稀有度','名称':'拼音'};
+function renderVehList(){
+  const main=$('main');
+  main.innerHTML='<div class="loading"><div class="spin"></div><div>正在载入车辆数据…</div></div>';
+  loadVehicles().then(function(){
+    const items=vehItems();
+    main.innerHTML='<div class="toolbar" data-qid="vq">'+
+        '<h2>车辆总览 <span class="count">'+items.length+' / '+CAR_INDEX.length+'</span></h2>'+
+        '<div class="selects">'+selHTML('排序',vehSorts,vehSort,'sort',SORT_ICON,SORT_HINT)+
+          selHTML('阵营',vehCamps(),vehCamp,'camp')+
+          selHTML('定位',vehRoles(),vehRole,'role')+
+          selHTML('品级',vehGrades(),vehGrade,'grade')+'</div>'+
+        searchHTML('vq','搜索车名 / 厂商 / 技能…',vehKeyword)+
+      '</div><div class="grid-cards">'+(items.length?items.map(vehCardHTML).join(''):vehEmptyHTML())+'</div>';
+    bindVehList(main);
+  }).catch(function(err){ main.innerHTML='<div class="empty"><div class="big">载入失败</div><div class="err">'+esc(err.message)+'</div><div style="font-size:12px">请通过 HTTP 访问，且 <code>ace/'+esc(CUR_VER)+'/vehicles.json</code> 可访问。</div></div>'; });
+}
+function bindVehList(el){
+  el.querySelectorAll('.vcard').forEach(function(card,idx){
+    card.onclick=function(){ gotoView('veh',CAR_INDEX[+card.dataset.i].id); };
+  });
+  el.querySelectorAll('.sel').forEach(function(box){
+    const kind=box.dataset.kind;
+    const btn=box.querySelector('.sel-btn');
+    if(kind==='sort'){
+      btn.onclick=function(e){
+        e.stopPropagation();
+        vehSort=btn.dataset.next;
+        try{ localStorage.setItem('va_sort',vehSort); }catch(err){}
+        rerenderVehGrid();
+      };
+      return;
+    }
+    btn.onclick=function(e){
+      e.stopPropagation();
+      const open=box.classList.contains('open');
+      el.querySelectorAll('.sel').forEach(function(b){b.classList.remove('open');});
+      if(!open) box.classList.add('open');
+    };
+    box.querySelectorAll('.opt').forEach(function(o){
+      o.onclick=function(e){
+        e.stopPropagation();
+        if(kind==='camp') vehCamp=o.dataset.v;
+        else if(kind==='role') vehRole=o.dataset.v;
+        else if(kind==='grade') vehGrade=o.dataset.v;
+        rerenderVehGrid();
+      };
+    });
+  });
+  const q=$('vq');
+  if(q) q.addEventListener('input',function(){ vehKeyword=this.value; rerenderVehGrid(); });
+}
+function rerenderVehGrid(){
+  const g=document.querySelector('.grid-cards'); if(!g) return;
+  const items=vehItems();
+  g.innerHTML=items.length?items.map(vehCardHTML).join(''):vehEmptyHTML();
+  const cnt=document.querySelector('.toolbar .count');
+  if(cnt) cnt.textContent=items.length+' / '+CAR_INDEX.length;
+  const g2=document.querySelector('.grid-cards');
+  if(g2) g2.querySelectorAll('.vcard').forEach(function(card){
+    card.onclick=function(){ gotoView('veh',CAR_INDEX[+card.dataset.i].id); };
+  });
 }
 
-function toggleDrawer(){
-    $('drawer').classList.toggle('open');
-    $('bd').classList.toggle('show')
+/* ============================================================
+   车辆 · 详情
+   ============================================================ */
+function stat(k,v,unit,raw){
+  if(v===undefined||v===null||v==='') return '';
+  return '<div class="stat"'+(raw!==undefined&&raw!==null&&raw!==''?' title="原始值 '+esc(raw)+'"':'')+'>'+
+    '<div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+(unit?'<small> '+unit+'</small>':'')+'</div></div>';
+}
+function kv(k,v){ return '<div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div>'; }
+function sortNodes(nodes){
+  if(!Array.isArray(nodes)) return [];
+  return nodes.slice().sort(function(a,b){
+    const aJ=(a.判断节点ID!==undefined||a.条件!==undefined)?1:0, bJ=(b.判断节点ID!==undefined||b.条件!==undefined)?1:0;
+    if(aJ!==bJ) return aJ-bJ;
+    const aN=String(a.节点名||a.条件||''), bN=String(b.节点名||b.条件||'');
+    if(aN!==bN) return aN.localeCompare(bN,'zh');
+    return (a.节点ID||a.判断节点ID||0)-(b.节点ID||b.判断节点ID||0);
+  });
+}
+function nodePairs(n){
+  const pairs=[];
+  for(const k in n){
+    if(String(k).charAt(0)==='_') continue;
+    if(['节点名','节点ID','判断节点ID','条件','分支','效果节点'].indexOf(k)>=0) continue;
+    if(/是否携带|芯片/.test(k)) continue;
+    const val=n[k];
+    if(k==='描述'&&(!val||/\{.*\}/.test(val))) continue;
+    if(Array.isArray(val)) continue;
+    pairs.push([k,val]);
+  }
+  return pairs;
+}
+const hiddenNode=n=>/是否携带|芯片/.test(String(n.节点名||n.条件||''));
+function nodeSig(n){ return JSON.stringify([n.节点名||n.条件||'节点',nodePairs(n)]); }
+function dedupeNodes(list){
+  if(!Array.isArray(list)) return [];
+  const seen={}, out=[];
+  list.forEach(function(n){
+    if(!n||hiddenNode(n)) return;
+    const s=nodeSig(n);
+    if(seen[s]){ seen[s]._dup++; return; }
+    const c=Object.assign({},n); c._dup=1; seen[s]=c; out.push(c);
+  });
+  return out;
+}
+function renderNode(n){
+  if(!n) return '';
+  const title=n.节点名||n.条件||'节点', id=(n.节点ID!==undefined?n.节点ID:n.判断节点ID);
+  if(hiddenNode(n)) return '';
+  const pairs=nodePairs(n);
+  if(!pairs.length) return '';
+  const dup=n._dup>1?'<small class="dup" title="另有 '+(n._dup-1)+' 个内容完全相同的节点已隐藏">×'+n._dup+'</small>':'';
+  return '<div class="node sub"><div class="nt">'+esc(title)+(id!==undefined?' <small style="color:var(--muted)">#'+esc(id)+'</small>':'')+dup+'</div>'+
+    '<div class="kv">'+pairs.map(p=>kv(p[0],p[1])).join('')+'</div></div>';
+}
+function skelDetail(){
+  const line=(w,m)=>'<div class="skel skel-line" style="width:'+w+';'+(m?'margin-top:'+m+';':'')+'"></div>';
+  return '<div class="skel skel-back" style="margin-bottom:12px"></div>'+
+  '<div class="detail-wrap"><div class="col-info">'+
+    '<div class="card"><div class="skel skel-title" style="width:190px"></div>'+
+      '<div style="display:flex;gap:6px;margin-top:10px">'+
+        '<div class="skel skel-line" style="width:56px"></div><div class="skel skel-line" style="width:64px"></div>'+
+        '<div class="skel skel-line" style="width:48px"></div><div class="skel skel-line" style="width:52px"></div></div>'+
+      line('72%','14px')+line('54%','8px')+'</div>'+
+    '<div class="card"><div class="skel skel-line" style="width:96px;margin-bottom:10px"></div>'+
+      '<div class="grid core">'+'<div class="skel skel-stat"></div>'.repeat(10)+'</div></div>'+
+    '<div class="card"><div class="skel skel-line" style="width:120px;margin-bottom:10px"></div>'+
+      line('88%','0')+line('76%','8px')+line('60%','8px')+'</div>'+
+  '</div><div class="col-media">'+
+    '<div class="hero"><div class="skel skel-pic"></div>'+
+      '<div style="display:flex;justify-content:space-between;margin-top:10px">'+
+        '<div class="skel skel-line" style="width:70px"></div><div class="skel skel-line" style="width:56px"></div></div></div>'+
+    '<div class="hero-skins"><div class="skel skel-line" style="width:52px;margin-bottom:12px"></div>'+
+      '<div class="mini-grid">'+'<div class="skel skel-mini"></div>'.repeat(6)+'</div></div>'+
+  '</div></div>';
+}
+function renderCarDetail(c){
+  const b=c.基础||{}, core=c.核心性能||{}, n2o=c.氮气||{}, turbo=n2o.涡轮||{}, ult=c.大招||{}, sp=c.SP技能;
+  const t=tierOf(b.品级), skins=c.车辆皮肤||[];
+  const phPic='<div class="ph" style="font-size:42px;font-weight:800">'+esc(initial(b.名称))+'</div>';
+  const heroImg=(c.车辆缩略图||{})['图标b']||(c.车辆缩略图||{})['图标m']||pickImg(c);
+
+  const mediaCol='<div class="col-media">'+
+    '<div class="hero"><div class="pic" id="hero-pic">'+phPic+cimg(heroImg,b.名称,'veh')+'</div>'+
+      '<div class="hero-cap"><span>当前：<b id="hero-name">原皮</b></span><span>'+skins.length+' 款皮肤</span></div></div>'+
+    (skins.length?'<div class="hero-skins"><div class="sec-title" style="margin:0 0 10px">皮肤</div><div class="mini-grid">'+
+      '<div class="mini on tap" tabindex="0" data-name="原皮" data-img="'+esc(heroImg)+'"><div class="box"><span style="font-weight:700;color:var(--ink-2)">'+esc(initial(b.名称))+'</span>'+cimg(heroImg,b.名称,'veh')+'</div><div class="sn">原皮</div></div>'+
+      skins.map(function(s){
+        const si=pickImg(s);
+        return '<div class="mini tap" tabindex="0" data-name="'+esc(s.名称||'')+'" data-img="'+esc(si||heroImg)+'"><div class="box"><span style="font-weight:700;color:var(--ink-2)">'+esc(initial(s.名称))+'</span>'+cimg(si,s.名称,'veh')+'</div><div class="sn">'+esc(s.名称||'')+'</div></div>';
+      }).join('')+
+    '</div></div>':'')+'</div>';
+
+  let info='<div class="card">'+
+    '<div class="h-title">'+esc(b.名称)+(b.厂商?'<span class="mk">'+esc(b.厂商)+'</span>':'')+'</div>'+
+    '<div class="h-tags">'+
+      '<span class="tag" style="color:'+t.color+';border-color:'+t.color+'66;background:'+t.color+'1a">'+t.name+'</span>'+
+      (b.阵营?'<span class="tag">'+esc(b.阵营)+'</span>':'')+
+      (b.定位?'<span class="tag">'+esc(b.定位)+'</span>':'')+
+      (b.赛道专精?'<span class="tag">专精 '+esc(b.赛道专精)+'</span>':'')+
+      (b.驱动方式?'<span class="tag">'+esc(b.驱动方式)+'</span>':'')+
+      (b.所属赛季?'<span class="tag">'+esc(b.所属赛季)+'</span>':'')+
+      (b.获取方式?'<span class="tag">'+esc(b.获取方式)+'</span>':'')+
+      (b.注册日期?'<span class="tag">'+esc(b.注册日期)+'</span>':'')+
+      '<span class="tag id">#'+esc(b.数据ID)+'</span>'+
+    '</div>'+
+    (b.技能简述?'<p class="desc">'+esc(b.技能简述)+'</p>':'')+'</div>';
+
+  const spd=(core.基础极速===undefined||core.基础极速===null||core.基础极速==='')?null:(Number(core.基础极速)+30);
+  const ultPower=(ult.加速曲线&&ult.加速曲线.length)?Number(ult.加速曲线[ult.加速曲线.length-1][1]):null;
+  info+='<div class="card"><div class="sec-title">核心性能 · 氮气</div><div class="grid core">'+
+    (spd!==null?'<div class="stat" title="原始值 '+esc(core.基础极速)+' km/h，已固定加成 +30"><div class="k">基础极速</div><div class="v">'+esc(spd)+'<small> km/h</small></div></div>':'')+
+    stat('动力',core.动力)+
+    (ultPower!==null&&ultPower!==undefined&&!isNaN(ultPower)?stat('大招动力',ultPower):'')+
+    stat('车辆重量',core.车辆重量,'kg')+stat('耐久',core.耐久)+
+    stat('氮气能量',pct(core.氮气能量),'',core.氮气能量)+stat('起步能量',pct(core.起步能量),'',core.起步能量)+
+    stat('集气系数',core.集气系数)+
+    stat('氮气时长',n2o.氮气时长)+stat('蓝色氮气极速',n2o.蓝色氮气极速,'km/h')+stat('紫色氮气极速',n2o.紫色氮气极速,'km/h')+
+    stat('蓝喷时长',turbo.空喷时长)+stat('蓝喷极速',turbo.空喷极速,'km/h')+
+    stat('紫喷时长',turbo.紫喷时长)+stat('紫喷极速',turbo.紫喷极速,'km/h')+
+    '</div></div>';
+
+  const ultSubs=[];
+  if(ult.类型) ultSubs.push(esc(ult.类型));
+  if(ult.极速提升!==undefined&&ult.极速提升!==null&&ult.极速提升!=='') ultSubs.push('极速提升 '+esc(ult.极速提升));
+  if(ult.持续时间!==undefined&&ult.持续时间!==null&&ult.持续时间!=='') ultSubs.push('持续 '+esc(ult.持续时间)+'s');
+  if(ult.技能ID) ultSubs.push('#'+esc(ult.技能ID));
+  info+='<div class="card"><div class="sec-title">大招</div><div class="ult-head">'+
+    '<div class="ult-ic"><span style="font-weight:800;color:var(--accent-ink)">'+esc(initial(ult.名称))+'</span></div>'+
+    '<div><div class="ult-name">'+esc(ult.名称||'')+'</div>'+
+    '<div class="ult-sub">'+ultSubs.join(' · ')+'</div></div></div>'+
+    (ult.充能条件?'<p class="desc tech">充能条件：'+rich(ult.充能条件)+'</p>':'')+
+    (ult.技能描述?'<p class="desc">'+rich(ult.技能描述)+'</p>':'')+
+    (ult['RECU限制解除(8级解锁)']?'<p class="desc tech">8 级解锁：'+rich(ult['RECU限制解除(8级解锁)'])+'</p>':'')+
+    (ult.大招演示视频?'<video src="'+esc(ult.大招演示视频)+'" controls muted preload="auto"></video>':'')+
+    (ult.技能节点&&ult.技能节点.length?'<div>'+sortNodes(dedupeNodes(ult.技能节点)).map(renderNode).join('')+'</div>':'')+
+    '</div>';
+
+  if(sp){
+    info+='<div class="card"><div class="sec-title">SP 技能</div><div class="ult-head">'+
+      '<div class="ult-ic"><span style="font-weight:800;color:var(--accent-ink)">'+esc(initial(sp.名称))+'</span></div>'+
+      '<div><div class="ult-name">'+esc(sp.名称||'')+'</div>'+
+      '<div class="ult-sub">'+(sp.技能ID?'#'+esc(sp.技能ID):'')+(sp.冷却时间?' · CD '+esc(sp.冷却时间):'')+'</div></div></div>'+
+      '<div class="kv">'+
+        (sp.存储上限?kv('存储上限',sp.存储上限):'')+(sp.集气量?kv('集气量',sp.集气量):'')+
+        (sp.大招能量?kv('大招能量',sp.大招能量):'')+(sp.闪现距离?kv('闪现距离',sp.闪现距离):'')+
+      '</div>'+
+      (sp.效果?'<p class="desc">'+rich(sp.效果)+'</p>':'')+
+      (sp.SP演示视频?'<video src="'+esc(sp.SP演示视频)+'" controls muted preload="auto"></video>':'')+
+      (sp.技能节点&&sp.技能节点.length?'<div>'+sortNodes(dedupeNodes(sp.技能节点)).map(renderNode).join('')+'</div>':'')+'</div>';
+  }
+
+  if(c.被动&&c.被动.length){
+    info+='<div class="card"><div class="sec-title">被动 · '+c.被动.length+'</div>'+
+      c.被动.map(function(p){
+        return '<div class="node" style="border-left-color:var(--ink)">'+
+          '<div class="nt">'+esc(p.名称||'')+(p.技能ID?' <small style="color:var(--muted)">#'+esc(p.技能ID)+'</small>':'')+'</div>'+
+          (p.效果?'<div class="nv">'+rich(p.效果)+'</div>':'')+'</div>'+
+          (p.技能节点?sortNodes(dedupeNodes(p.技能节点)).map(renderNode).join(''):'');
+      }).join('')+'</div>';
+  }
+
+  if(c.芯片){
+    info+='<div class="card"><div class="sec-title">芯片</div>'+
+      (c.芯片.布局模板?'<div class="kv">'+kv('布局模板',c.芯片.布局模板)+'</div>':'')+
+      (c.芯片.扩展槽形状&&c.芯片.扩展槽形状.length
+        ?'<div class="sec-title" style="margin:14px 0 8px">扩展槽形状</div><div class="chips-shapes">'+
+          c.芯片.扩展槽形状.map(s=>'<div class="shape">'+shapeSVG(s)+'<div class="lb">'+esc(s)+'</div></div>').join('')+'</div>'
+        :'')+'</div>';
+  }
+
+  const rel=c.RELATION||{};
+  if((rel.适配&&rel.适配.length)||(rel.被克制&&rel.被克制.length)){
+    info+='<div class="card"><div class="sec-title">车辆关系</div>';
+    if(rel.适配&&rel.适配.length)
+      info+='<div class="rel-group"><div class="rl">适配</div><div class="chips">'+
+        rel.适配.map(n=>relChip(n,'')).join('')+'</div></div>';
+    if(rel.被克制&&rel.被克制.length)
+      info+='<div class="rel-group"><div class="rl">被克制</div><div class="chips">'+
+        rel.被克制.map(n=>relChip(n,'bad')).join('')+'</div></div>';
+    info+='</div>';
+  }
+
+  if(c.故事) info+='<div class="card"><div class="sec-title">车辆故事</div><p class="desc" style="margin-top:0">'+esc(c.故事)+'</p></div>';
+
+  const main=$('main');
+  main.innerHTML='<div class="back" id="vback"><span class="ar">←</span> 返回车辆</div>'+
+    '<div class="detail-wrap"><div class="col-info">'+info+'</div>'+mediaCol+'</div>';
+  document.title=(b.名称?b.名称+' · ':'')+'车辆档案库';
+  $('vback').onclick=function(){ gotoView('veh'); };
+  const hero=$('hero-pic');
+  if(hero) document.querySelectorAll('.mini').forEach(function(m){
+    m.onclick=function(){
+      document.querySelectorAll('.mini').forEach(x=>x.classList.remove('on'));
+      m.classList.add('on');
+      document.getElementById('hero-name').textContent=m.getAttribute('data-name')||'原皮';
+      /* 同步切换大图：换皮肤时主图跟着换 */
+      const f=m.getAttribute('data-img');
+      let im=hero.querySelector('img.cimg');
+      if(!f){ if(im) im.remove(); return; }
+      if(!im){
+        im=document.createElement('img');
+        im.className='cimg'; im.loading='lazy'; im.decoding='async';
+        hero.appendChild(im);
+      }
+      im.style.opacity='0';
+      im.alt=m.getAttribute('data-name')||'';
+      im.src=IMG_BASE+f;
+      if(im.complete&&im.naturalWidth) im.style.opacity='1';
+    };
+  });
+}
+function relChip(name,cls){
+  const c=CAR_INDEX.find(x=>x.name===name);
+  return c?'<a class="chip-link '+cls+'" href="#/veh/'+c.id+'" onclick="event.preventDefault();location.hash=\'#/veh/'+c.id+'\'">'+esc(name)+'</a>'
+    :'<span class="chip-link" style="cursor:default">'+esc(name)+'</span>';
+}
+function renderCar(id){
+  const main=$('main');
+  main.innerHTML='<div class="skel skel-back" style="margin-bottom:12px"></div>'+skelDetail();
+  loadVehicles().then(function(){
+    const c=CAR_FULL[String(id)];
+    if(!c){ main.innerHTML='<div class="empty"><div class="big">未找到该车辆</div><div class="err">ID：'+esc(id)+'</div></div>'; return; }
+    renderCarDetail(c);
+    window.scrollTo(0,0);
+  }).catch(function(err){
+    main.innerHTML='<div class="empty"><div class="big">载入失败</div><div class="err">'+esc(err.message)+'</div></div>';
+  });
 }
 
-render();
-calcNormal();
-calcSolo();
+/* ============================================================
+   通用资料模块（活动 / 赛季活动 / 街头车神 / 称号 / 道具 / 游戏介绍 / 平衡性更新）
+   ============================================================ */
+let SEASON_START=null;
+function seasonStarts(){
+  if(SEASON_START) return SEASON_START;
+  SEASON_START={};
+  const g=AUX_CACHE['street_god.json'];
+  if(g){
+    const arr=Array.isArray(g)?g:Object.values(g);
+    arr.forEach(function(x){
+      const s=x['赛季'], t=timeKey(x);
+      if(!s||!t) return;
+      if(SEASON_START[s]==null||t<SEASON_START[s]) SEASON_START[s]=t;
+    });
+  }
+  return SEASON_START;
+}
+function fmtSeasonTime(code){
+  const m=String(code||'').match(/^S(\d+)_WEEK(\d+)/i);
+  if(!m) return null;
+  const season='S'+m[1], week=Number(m[2]);
+  const label=season+' 第'+week+'周';
+  const st=seasonStarts()[season];
+  if(!st) return label;
+  const d=new Date(st+(week-1)*7*86400000);
+  return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate())+' · '+label;
+}
+const MODS={
+  activities:{file:'activities.json',title:'活动',unit:'个',kind:'list',
+    row:r=>({id:r['ID'],name:r['名称'],tags:[r['状态']],meta:[['分类',r['分类']],['NO',r['NO']],['时间',r['时间']]]}),
+    filters:[{key:'状态',get:r=>r['状态']}]},
+  titles:{file:'titles.json',title:'称号',unit:'个',kind:'list',
+    row:r=>({id:r['数据ID'],name:r['名称'],tags:[r['等级']],meta:[['分类','分类 '+r['分类']],['获取方式',r['获取方式']]]}),
+    filters:[{key:'等级',get:r=>r['等级']},{key:'分类',get:r=>'分类 '+r['分类']}]},
+  street_god:{file:'street_god.json',title:'街头车神',unit:'期',kind:'list',sortRaw:(a,b)=>timeKey(b)-timeKey(a),sortLabel:'时间 新→旧',
+    row:r=>({id:r['期次'],name:r['地图']||r['期次'],tags:[r['赛季'],r['状态']],
+      meta:[['期次',r['期次']],['地点',r['地点']],['时间',r['时间']],['完赛门槛',r['完赛门槛']],['每日挑战',r['每日挑战']]]}),
+    filters:[{key:'赛季',get:r=>r['赛季']},{key:'地点',get:r=>r['地点']},{key:'状态',get:r=>r['状态']}]},
+  season_activities:{file:'season_activities.json',title:'赛季活动',unit:'个',kind:'season',paged:60,
+    chipFilter:'赛季', chipSingle:true, defaultChip:'常驻活动',
+    groupList:g=>g['活动列表']||[],
+    valueOrder:arr=>arr.slice().sort((a,b)=>srank(a)-srank(b)),
+    flat:(g,a)=>({ID:a['ID'],名称:a['名称'],分类:a['分类'],状态:a['状态'],NO:a['NO'],时间:a['时间'],
+      赛季:g['赛季'],核心资源:!!a['核心资源'],Banner展示:!!a['Banner展示'],Banner资源:!!a['Banner资源']}),
+    card:r=>({id:r['ID'],name:r['名称']}),
+    sortLabel:'时间 新→旧',
+    filters:[{key:'赛季',get:g=>g['赛季']}]},
+  items:{file:'items.json',title:'道具',unit:'件',kind:'grid',paged:60,
+    card:r=>({id:r.id,name:r.name,rarity:r.rarityLabel||'',icon:r.icon||'',type:r.typeGroup||''}),
+    filters:[{key:'品质',get:r=>r.rarityLabel||''},{key:'类别',get:r=>r.typeGroup||''}]},
+  game_intro:{file:'game_intro.json',title:'游戏介绍',unit:'篇',kind:'read',sortRaw:(a,b)=>Number(b['数据ID'])-Number(a['数据ID']),
+    head:r=>({id:r['数据ID'],
+      name:(r['标题']||[])[0]||r['顶部标题']||('#'+r['数据ID']),
+      sub:'编号 '+r['数据ID']+' · '+((r['标题']||[]).length||(r['说明']?1:0))+' 节'}),
+    sections:r=>{
+      const T=r['标题']||[],B=r['说明']||[];
+      const list=T.slice();
+      if(!list.length && B.length) list.push(r['顶部标题']||'');
+      return list.map((t,i)=>({title:t,body:[B[i]]}));
+    },
+    filters:[]},
+  balance_updates:{file:'balance_updates.json',title:'平衡性更新',unit:'个',kind:'read',sortRaw:(a,b)=>Number(b['版本ID'])-Number(a['版本ID']),
+    aux:['street_god.json'],
+    head:r=>({id:r['版本ID'],name:'版本 '+r['版本号'],
+      sub:[fmtSeasonTime(r['开始时间'])||r['开始时间'],r['持续天数']?'持续 '+r['持续天数']+' 天':''].filter(Boolean).join(' · ')}),
+    fmtKV:{开始时间:v=>fmtSeasonTime(v)||v},
+    sections:r=>{const T=r['标题']||[],B=r['总结']||[];return T.map((t,i)=>({title:t,body:[B[i]]}))},
+    cards:r=>{const o=[],v=r['车辆调整']||[],c=r['芯片调整']||[];
+      if(v.length) o.push({title:'车辆调整',items:v.map(x=>({name:x['车辆名称'],tag:x['是否新增']?'新增':'',fields:[['基础调整',x['基础调整']],['大招调整',x['大招调整']]]}))});
+      if(c.length) o.push({title:'芯片调整',items:c.map(x=>({name:x['芯片名称'],tag:'',fields:[['调整内容',x['调整内容']]]}))});
+      return o},
+    filters:[]}
+};
+const VIEW2MOD={'activities':'activities','season':'season_activities','street_god':'street_god','items':'items','titles':'titles','intro':'game_intro','balance':'balance_updates'};
+
+function renderMod(view){
+  const modName=VIEW2MOD[view];
+  const MOD=MODS[modName];
+  const main=$('main');
+  document.title=MOD.title+' · 车辆档案库';
+  main.innerHTML='<div class="loading"><div class="spin"></div><div>正在载入'+esc(MOD.title)+'…</div></div>';
+  ModView(modName,main);
+}
+function ModView(modName,mainEl){
+  const MOD=MODS[modName];
+  let RAW=[],ITEMS=[],keyword='',sortKey='default',openDD=null,page=1,selChip=null;
+  const filters={};
+  fetchData(CUR_VER,MOD.file).then(function(data){
+    RAW=Array.isArray(data)?data:Object.keys(data).map(k=>data[k]);
+    /* 物品图字段无文件后缀（如 item_gold_01_m），按车辆同款命名惯例补 .png，否则 pickImg 识别不出、永远显示占位 */
+    if(modName==='items'){
+      RAW.forEach(function(r){
+        ['icon','iconSmall','iconAlt'].forEach(function(k){
+          var v=r[k];
+          if(typeof v==='string'&&v&&!IMG_EXT.test(v)) r[k]=v+'.png';
+        });
+      });
+    }
+    return (MOD.aux?Promise.all(MOD.aux.map(function(f){
+      return fetchData(CUR_VER,f).then(function(d){AUX_CACHE[f]=d;}).catch(function(){AUX_CACHE[f]=null;});
+    })):Promise.resolve()).then(function(){ return data; });
+  }).then(function(){
+    build();
+    /* 每个模块各探测一次图片：拿到第一条有图的文件名试一下 */
+    const p=ITEMS.find(function(x){ return pickImg(x.raw); });
+    if(p) probeNS(modName,pickImg(p.raw));
+    render();
+  }).catch(function(err){
+    mainEl.innerHTML='<div class="empty"><div class="big">载入失败</div><div class="err">'+esc(err.message)+'</div>'+
+      '<div style="font-size:12px">请确认 <code>ace/'+esc(CUR_VER)+'/'+esc(MOD.file)+'</code> 可访问。</div></div>';
+  });
+  function build(){
+    if(MOD.sortRaw) RAW=RAW.slice().sort(MOD.sortRaw);
+    if(MOD.kind==='list'){
+      ITEMS=RAW.map(r=>{const n=MOD.row(r);n.raw=r;n._s=(n.name+' '+(n.tags||[]).join(' ')+' '+n.meta.map(x=>x[1]).join(' ')).toLowerCase();return n});
+    } else if(MOD.kind==='grid'){
+      ITEMS=RAW.map(r=>{const c=MOD.card(r);c.raw=r;c._s=(c.name+' '+c.type+' '+c.rarity).toLowerCase();return c});
+    } else if(MOD.kind==='read'){
+      ITEMS=RAW.map(r=>{const h=MOD.head(r);h.raw=r;h._s=(h.name+' '+h.sub).toLowerCase();return h});
+    } else if(MOD.kind==='season'){
+      const flat=[];
+      RAW.forEach(g=>(MOD.groupList?MOD.groupList(g):(g['活动列表']||[])).forEach(a=>flat.push(MOD.flat(g,a))));
+      ITEMS=flat.map(r=>{const c=MOD.card(r);c.raw=r;
+        c._s=(c.name+' '+r['赛季']+' '+r['状态']+' '+r['时间']+' #'+r['ID']).toLowerCase();return c;});
+      if(MOD.chipSingle){
+        const vals=chipValues();
+        selChip=(MOD.defaultChip&&vals.indexOf(MOD.defaultChip)>=0)?MOD.defaultChip:(vals[0]||null);
+      }
+    } else { ITEMS=[]; }
+    MOD.filters.forEach(f=>{ if(f.key!==MOD.chipFilter) filters[f.key]=[]; });
+    if(MOD.chipFilter && !MOD.chipSingle) filters[MOD.chipFilter]=[];
+  }
+  function chipValues(){
+    const f=MOD.filters.filter(x=>x.key===MOD.chipFilter)[0];
+    if(!f) return [];
+    return counts(f).map(x=>x.v);
+  }
+  function counts(f){
+    const m={};
+    if(MOD.kind==='season' && f.key===MOD.chipFilter){
+      RAW.forEach(g=>{
+        const k=f.get(g); if(k==null||k==='')return;
+        const list=(MOD.groupList?MOD.groupList(g):(g['活动列表']||[]));
+        m[k]=(m[k]||0)+list.length;
+      });
+    } else {
+      ITEMS.forEach(it=>{const v=f.get(it.raw||it);if(v==null||v==='')return;m[v]=(m[v]||0)+1});
+    }
+    let ks=Object.keys(m);
+    ks=MOD.valueOrder?MOD.valueOrder(ks):ks.sort((a,b)=>m[b]-m[a]);
+    return ks.map(k=>({v:k,c:m[k],n:k}));
+  }
+  function toolbar(count){
+    const sortLabel=sortKey==='name'?'名称':(sortKey==='id'?'ID 小→大':(MOD.sortLabel||'默认排序'));
+    const sortBtn=(MOD.kind==='list'||MOD.kind==='season')?'<div class="sel" data-kind="sort"><button class="sel-btn" type="button" data-sort="1"><span class="ic">排</span>'+
+      '<span>'+esc(sortLabel)+'</span><span class="arrow">▼</span></button></div>':'';
+    let drops='',chips='';
+    MOD.filters.forEach(f=>{
+      const opts=counts(f);
+      if(MOD.chipFilter===f.key){
+        chips+='<div class="chips">'+opts.map(it=>{
+          const on=MOD.chipSingle?(selChip===it.v):(filters[f.key].indexOf(it.v)>=0);
+          return '<button type="button" class="chipbtn'+(on?' on':'')+'" data-k="'+esc(f.key)+'" data-v="'+esc(it.v)+'">'+esc(it.n)+'<small>'+it.c+'</small></button>';
+        }).join('')+'</div>';
+      } else {
+        drops+=ddHtml(f.key,f.key,opts,filters[f.key],openDD);
+      }
+    });
+    return '<div class="toolbar" data-qid="mq"><div class="trow"><h2>'+esc(MOD.title)+'<span class="count">'+count+'</span></h2>'+
+      '<div class="selects">'+drops+sortBtn+'</div>'+
+      searchHTML('mq','搜索…',keyword)+'</div>'+
+      chips+'</div>';
+  }
+  function rowHtml(n){
+    /* 列表行首补一张 22px 小图标，让表格视图也能一眼认出条目 */
+    const ic=pickImg(n.raw);
+    return '<div class="row" data-id="'+esc(n.id)+'"><div class="hd">'+
+      '<span class="row-ic">'+cimg(ic,n.name,modName)+'</span><span class="nm">'+esc(n.name)+'</span>'+
+      (n.tags||[]).filter(Boolean).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div>'+
+      (n.meta&&n.meta.length?'<div class="meta">'+n.meta.filter(x=>x[1]!=null&&x[1]!=='').map(x=>'<span class="kv"><i>'+esc(x[0])+'</i><b>'+esc(x[1])+'</b></span>').join('')+'</div>':'')+
+      '</div>';
+  }
+  function pass(it,f){ const sel=filters[f.key]; return !(sel&&sel.length)||sel.indexOf(String(f.get(it.raw||it)))>=0; }
+  function filteredList(){
+    const q=keyword.trim().toLowerCase();
+    let list=ITEMS.filter(it=>{
+      if(q&&it._s.indexOf(q)<0)return false;
+      for(const f of MOD.filters){ if(f.key===MOD.chipFilter) continue; if(!pass(it,f)) return false; }
+      return true;
+    });
+    if(MOD.kind==='season'){
+      if(selChip) list=list.filter(it=>String(it.raw['赛季'])===selChip);
+      if(sortKey==='id') list=list.slice().sort((a,b)=>(a.id||0)-(b.id||0));
+      else if(sortKey==='name') list=list.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
+      else list=list.slice().sort((a,b)=>(timeKey(b.raw)-timeKey(a.raw))||((a.id||0)-(b.id||0)));
+    }
+    if(MOD.kind==='list'){
+      if(sortKey==='id') list=list.slice().sort((a,b)=>(a.id||0)-(b.id||0));
+      else if(sortKey==='name') list=list.slice().sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
+    }
+    return list;
+  }
+  function cardHtml(c){
+    return '<div class="icard tap" tabindex="0" data-id="'+esc(c.id)+'" style="--q:'+rcolor(c.rarity)+'">'+
+      '<div class="box"><span class="ph">'+esc(initial(c.name))+'</span>'+cimg(pickImg(c.raw),c.name,modName)+'</div>'+
+      '<div class="nm">'+esc(c.name)+'</div>'+(c.rarity?'<div class="rl">'+esc(c.rarity)+'</div>':'')+'</div>';
+  }
+  function actCard(c){
+    const r=c.raw, id=String(c.id);
+    const st=r['状态']||'';
+    const stc=st.indexOf('进行')>=0?'on':(st.indexOf('即将')>=0?'soon':'off');
+    const full=(r['时间']||'').replace(/\s*~\s*/,' ~ ');
+    return '<div class="acard tap" tabindex="0" data-id="'+esc(id)+'" style="--h:'+hueOf(r['赛季'])+'">'+
+      '<div class="athumb"><span class="ph">'+esc(initial(c.name))+'</span>'+cimg(pickImg(r),c.name,modName)+
+        (st?'<span class="stat '+stc+'">'+esc(st)+'</span>':'')+
+      '</div>'+
+      '<div class="abody"><div class="anm" title="'+esc(c.name)+'">'+esc(c.name)+'</div>'+
+        '<div class="ameta"><span class="ai">#'+esc(id)+'</span><span class="at" title="'+esc(full)+'">'+esc(full||'—')+'</span></div>'+
+      '</div></div>';
+  }
+  function fillArt(el,id){
+    if(el.dataset.filled) return;
+    const it=ITEMS.find(x=>String(x.id)===String(id)); if(!it) return;
+    const r=it.raw; let h='';
+    (MOD.sections(r)||[]).forEach(s=>{ if(!s||(!s.title&&!(s.body||[]).some(Boolean)))return;
+      h+='<div class="sec"><h4>'+esc(s.title||'—')+'</h4>'+((s.body||[]).filter(Boolean).map(b=>'<div class="rich">'+rich(b)+'</div>').join(''))+'</div>';
+    });
+    if(MOD.cards){ (MOD.cards(r)||[]).forEach(sec=>{
+      h+='<div class="sec"><h4>'+esc(sec.title)+'</h4><div class="adjs">'+(sec.items||[]).map(it2=>
+        '<div class="adj"><div class="adj-hd"><span class="nm">'+esc(it2.name||'—')+'</span>'+
+          (it2.tag?'<span class="tag on">'+esc(it2.tag)+'</span>':'')+'</div>'+
+        (it2.fields||[]).filter(f=>f[1]!=null&&f[1]!=='').map(f=>'<div class="adj-row"><span class="lb">'+esc(f[0])+'</span><div class="tx">'+rich(f[1])+'</div></div>').join('')+
+        '</div>').join('')+'</div></div>';
+    }); }
+    el.innerHTML=h||'<div class="rich">（无内容）</div>';
+    el.dataset.filled='1';
+  }
+  function openDetail(n){
+    const r=n.raw||{};
+    const HIDE={奖励:1};
+    const kv=Object.keys(r).filter(k=>{
+      if(HIDE[k]) return false;
+      const v=r[k];return v!=null&&v!==''&&v!==false&&!(Array.isArray(v)&&!v.length)
+    }).map(k=>{
+      let v=r[k]; if(v===true) v='是';
+      if(MOD.fmtKV&&MOD.fmtKV[k]) v=MOD.fmtKV[k](v,r);
+      if(Array.isArray(v)) v=v.join(', '); if(typeof v==='object') v=JSON.stringify(v);
+      return '<div class="mkv"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>';
+    }).join('');
+    openModal('<button class="mclose" type="button" aria-label="关闭">✕</button><h3>'+esc(n.name)+'</h3><div class="mgrid">'+kv+'</div>');
+  }
+  function render(){
+    if(MOD.kind==='list'){
+      const list=filteredList();
+      mainEl.innerHTML=toolbar(list.length+' / '+ITEMS.length+' '+MOD.unit)+'<div class="rows">'+
+        (list.length?list.map(rowHtml).join(''):'<div class="empty"><div class="big">没有匹配项</div><div>放宽筛选或清空搜索。</div></div>')+'</div>';
+    } else if(MOD.kind==='grid'){
+      const list=filteredList();
+      const per=MOD.paged||60, pages=Math.max(1,Math.ceil(list.length/per));
+      if(page>pages) page=1; if(page<1) page=1;
+      const slice=list.slice((page-1)*per,page*per);
+      mainEl.innerHTML=toolbar(list.length+' / '+ITEMS.length+' '+MOD.unit)+
+        (list.length?'<div class="grid">'+slice.map(cardHtml).join('')+'</div>'+
+          '<div class="pager"><button data-pg="prev"'+(page<=1?' disabled':'')+'>上一页</button>'+
+          '<span class="pg">'+page+' / '+pages+'</span><button data-pg="next"'+(page>=pages?' disabled':'')+'>下一页</button></div>'
+          :'<div class="empty"><div class="big">没有匹配项</div><div>放宽筛选或清空搜索。</div></div>');
+    } else if(MOD.kind==='season'){
+      const list=filteredList();
+      const per=MOD.paged||60, pages=Math.max(1,Math.ceil(list.length/per));
+      if(page>pages) page=1; if(page<1) page=1;
+      const slice=list.slice((page-1)*per,page*per);
+      const title=selChip||'全部赛季';
+      mainEl.innerHTML=toolbar(list.length+' / '+ITEMS.length+' '+MOD.unit)+
+        (list.length?'<div class="sechd"><span class="dot" style="--h:'+hueOf(title)+'"></span>'+
+          '<b>'+esc(title)+'</b><span>共 '+list.length+' 个活动</span></div>'+
+          '<div class="grid act">'+slice.map(actCard).join('')+'</div>'+
+          '<div class="pager"><button data-pg="prev"'+(page<=1?' disabled':'')+'>上一页</button>'+
+          '<span class="pg">'+page+' / '+pages+'</span><button data-pg="next"'+(page>=pages?' disabled':'')+'>下一页</button></div>'
+          :'<div class="empty"><div class="big">没有匹配项</div><div>换个赛季，或清空搜索。</div></div>');
+    } else if(MOD.kind==='read'){
+      const list=filteredList();
+      mainEl.innerHTML=toolbar(list.length+' / '+ITEMS.length+' '+MOD.unit)+'<div>'+
+        (list.length?list.map(it=>'<div class="art" data-id="'+esc(it.id)+'"><div class="art-hd"><span class="t">'+esc(it.name)+'</span>'+
+          '<span class="s">'+esc(it.sub)+'</span><span class="ar">▶</span></div><div class="art-bd"></div></div>').join('')
+          :'<div class="empty"><div class="big">没有匹配项</div></div>')+'</div>';
+    }
+    bind();
+  }
+  function bind(){
+    const tb=mainEl.querySelector('.toolbar');
+    if(tb) tb.addEventListener('click',function(e){
+      const sb=e.target.closest('.sel-btn');
+      if(sb){
+        const drop=sb.parentNode;
+        if(drop.dataset.kind==='sort'){ const o=['default','name','id']; sortKey=o[(o.indexOf(sortKey)+1)%o.length]; render(); return; }
+        const open=!drop.classList.contains('open');
+        tb.querySelectorAll('.sel').forEach(d=>d.classList.remove('open'));
+        openDD=open?drop.dataset.dd:null; if(open) drop.classList.add('open');
+        return;
+      }
+      const chip=e.target.closest('.chipbtn');
+      if(chip){
+        const k=chip.dataset.k,v=chip.dataset.v;
+        if(MOD.chipSingle){ selChip=(selChip===v?null:v); }
+        else { const arr=filters[k]; const i=arr.indexOf(v); if(i>=0)arr.splice(i,1);else arr.push(v); }
+        page=1; render(); return;
+      }
+      const opt=e.target.closest('.opt');
+      if(opt){ const k=opt.dataset.k,v=opt.dataset.v,arr=filters[k]; const i=arr.indexOf(v); if(i>=0)arr.splice(i,1);else arr.push(v); openDD=k; page=1; render(); return; }
+    });
+    const q=mainEl.querySelector('#mq');
+    if(q) q.addEventListener('input',function(){ keyword=this.value; page=1; const pos=this.selectionStart; render(); const n=mainEl.querySelector('#mq'); if(n){ n.focus(); n.setSelectionRange(pos,pos); } });
+    if(MOD.kind==='list'){
+      const rows=mainEl.querySelector('.rows');
+      if(rows) rows.addEventListener('click',e=>{ const row=e.target.closest('.row'); if(!row)return; const n=ITEMS.find(x=>String(x.id)===row.dataset.id); if(n) openDetail(n); });
+    }
+    if(MOD.kind==='grid'){
+      const g=mainEl.querySelector('.grid'); if(g) g.addEventListener('click',e=>{ const c=e.target.closest('.icard'); if(!c)return; const it=RAW.find(x=>String(x.id)===c.dataset.id); if(it) openDetail({name:it.name,raw:it}); });
+      const pg=mainEl.querySelector('.pager'); if(pg) pg.addEventListener('click',e=>{ const b=e.target.closest('[data-pg]'); if(!b)return; page+=(b.dataset.pg==='next'?1:-1); render(); });
+    }
+    if(MOD.kind==='season'){
+      const g=mainEl.querySelector('.grid.act');
+      if(g) g.addEventListener('click',e=>{ const c=e.target.closest('.acard'); if(!c)return; const it=ITEMS.find(x=>String(x.id)===c.dataset.id); if(it) openDetail(it); });
+      const pg=mainEl.querySelector('.pager'); if(pg) pg.addEventListener('click',e=>{ const b=e.target.closest('[data-pg]'); if(!b)return; page+=(b.dataset.pg==='next'?1:-1); render(); });
+    }
+    if(MOD.kind==='read'){
+      mainEl.querySelectorAll('.art').forEach(a=>a.querySelector('.art-hd').addEventListener('click',()=>{
+        const open=a.classList.toggle('open'); if(open) fillArt(a.querySelector('.art-bd'),a.dataset.id);
+      }));
+    }
+  }
+}
+
+/* ============================================================
+   地图
+   ============================================================ */
+let TRACKS=[];
+let mapKeyword='', mapRegion=[], mapLaps=[];
+let mapSort='id';
+function renderMap(){
+  const main=$('main');
+  main.innerHTML='<div class="loading"><div class="spin"></div><div>正在载入地图数据…</div></div>';
+  fetchData(CUR_VER,'tracks.json').then(function(data){
+    TRACKS=[];
+    Object.keys(data).forEach(function(k){
+      const rec=data[k];
+      if(!rec||typeof rec!=='object') return;
+      const laps=Array.isArray(rec['圈数'])?rec['圈数']:[];
+      TRACKS.push({
+        id:rec['数据ID'], name:rec['名称']||('ID '+rec['数据ID']), pc:rec['PC端名称']||'',
+        region:rec['所在地']||'', laps:laps, lapsTxt:laps.join('/')||'—',
+        thr:rec['最快计时门槛'],
+        img:pickImg(rec),
+        space:Array.isArray(rec['空间ID'])?rec['空间ID']:[].concat(rec['空间ID']||[])
+      });
+    });
+    TRACKS.forEach(c=>{ c._s=(c.name+' '+c.pc+' '+c.region+' '+c.lapsTxt).toLowerCase(); });
+    const tp=TRACKS.find(function(c){ return c.img; }); if(tp) probeNS('map',tp.img);
+    renderMapGrid(main);
+  }).catch(function(err){
+    main.innerHTML='<div class="empty"><div class="big">地图数据载入失败</div><div class="err">'+esc(err.message)+'</div></div>';
+  });
+}
+function mapCounts(get){
+  const m={};
+  TRACKS.forEach(c=>{ const v=get(c); if(v==null||v==='')return; m[v]=(m[v]||0)+1; });
+  return Object.keys(m).sort((a,b)=>m[b]-m[a]).map(k=>({v:k,c:m[k],n:k}));
+}
+function mapFiltered(){
+  const q=mapKeyword.trim().toLowerCase();
+  const list=TRACKS.filter(function(c){
+    if(q&&c._s.indexOf(q)<0) return false;
+    if(mapRegion.length&&mapRegion.indexOf(c.region)<0) return false;
+    if(mapLaps.length&&mapLaps.indexOf(c.lapsTxt)<0) return false;
+    return true;
+  });
+  if(mapSort==='name') list.sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
+  else if(mapSort==='thr') list.sort((a,b)=>(a.thr||0)-(b.thr||0)||a.name.localeCompare(b.name,'zh-Hans-CN'));
+  else list.sort((a,b)=>(a.id||0)-(b.id||0));
+  return list;
+}
+function mapCardHTML(c){
+  return '<div class="track tap" tabindex="0" data-id="'+esc(c.id)+'">'+
+      '<div class="pic">'+
+      '<svg class="ph-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.4-2.1V4L9 6.1 15 4l5.4 2.1V18L15 15.9 9 20z"/><path d="M9 6.1V20M15 4v11.9"/></svg>'+
+      '<span class="ph">'+esc(initial(c.region||c.name))+'</span>'+cimg(c.img,c.name,'map')+'</div>'+
+    '<div class="body"><div class="nm">'+esc(c.name)+'</div>'+
+      '<div class="meta"><span class="tag reg">'+esc(c.region||'—')+'</span>'+
+        '<span class="tag">'+esc(c.lapsTxt)+' 圈</span></div>'+
+      '<div class="foot"><span>最快门槛</span><span><b>'+esc(c.thr==null?'—':c.thr)+'</b> s</span></div>'+
+    '</div></div>';
+}
+const MAP_SORTS=[{k:'id',n:'ID 小→大'},{k:'name',n:'名称'},{k:'thr',n:'门槛 小→大'}];
+function renderMapGrid(mainEl){
+  const list=mapFiltered();
+  mainEl.innerHTML='<div class="toolbar" data-qid="mq">'+
+      '<h2>地图 <span class="count">'+list.length+' / '+TRACKS.length+' 张</span></h2>'+
+      '<div class="selects">'+
+        ddHtml('所在地','所在地',mapCounts(c=>c.region),mapRegion,null)+
+        ddHtml('圈数','圈数',mapCounts(c=>c.lapsTxt),mapLaps,null)+
+        '<div class="sel" data-kind="sort"><button class="sel-btn" type="button" data-sort="1">'+
+          '<span class="ic">排</span><span>'+esc((MAP_SORTS.find(s=>s.k===mapSort)||MAP_SORTS[0]).n)+'</span>'+
+          '<span class="arrow">▼</span></button></div>'+
+      '</div>'+
+      searchHTML('mq','搜索地图名 / 所在地…',mapKeyword)+
+    '</div>'+
+    (list.length?'<div class="grid">'+list.map(mapCardHTML).join('')+'</div>'
+      :'<div class="empty"><div class="big">没有匹配的地图</div><div>试着放宽筛选条件，或清空搜索关键词。</div></div>');
+  bindMap(mainEl);
+}
+function bindMap(mainEl){
+  const tb=mainEl.querySelector('.toolbar');
+  if(tb) tb.addEventListener('click',function(e){
+    const sb=e.target.closest('.sel-btn');
+    if(sb){
+      const drop=sb.parentNode;
+      if(drop.dataset.kind==='sort'){
+        const i=MAP_SORTS.findIndex(s=>s.k===mapSort);
+        mapSort=MAP_SORTS[(i+1)%MAP_SORTS.length].k; renderMapGrid(mainEl); return;
+      }
+      const open=!drop.classList.contains('open');
+      tb.querySelectorAll('.sel').forEach(d=>d.classList.remove('open'));
+      if(open) drop.classList.add('open');
+      return;
+    }
+    const opt=e.target.closest('.opt');
+    if(opt){
+      const k=opt.dataset.k, v=opt.dataset.v, arr=(k==='所在地'?mapRegion:mapLaps);
+      const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v);
+      renderMapGrid(mainEl); return;
+    }
+  });
+  const q=mainEl.querySelector('#mq');
+  if(q) q.addEventListener('input',function(){ mapKeyword=this.value; renderMapGrid(mainEl); });
+  const grid=mainEl.querySelector('.grid');
+  if(grid) grid.addEventListener('click',function(e){
+    const card=e.target.closest('.track'); if(!card) return;
+    const c=TRACKS.find(x=>String(x.id)===card.dataset.id); if(!c) return;
+    const kv=arr=>arr.filter(x=>x[1]!=null&&x[1]!=='').map(x=>'<div class="mkv"><div class="k">'+esc(x[0])+'</div><div class="v">'+esc(x[1])+'</div></div>').join('');
+    openModal('<button class="mclose" type="button" aria-label="关闭">✕</button>'+
+      '<div class="mhd"><div><h3>'+esc(c.name)+'</h3><div class="sub">#'+esc(c.id)+(c.pc&&c.pc!==c.name?' · PC端「'+esc(c.pc)+'」':'')+' · '+esc(c.region||'—')+'</div></div></div>'+
+      '<div class="mpic"><span class="ph">'+esc(initial(c.region||c.name))+'</span></div>'+
+      '<div class="mgrid">'+kv([['所在地',c.region],['圈数',c.lapsTxt],['最快计时门槛',c.thr==null?'':c.thr+' s'],
+        ['空间 ID',c.space.join(', ')],['PC 端名称',c.pc],['数据 ID',c.id]])+'</div>');
+  });
+}
+
+/* ============================================================
+   芯片
+   ============================================================ */
+let CHIPS=[];
+let chipKeyword='', chipShape=[], chipQuality=[], chipType=[];
+let chipSort='qid';
+const CHIP_SORTS=[{k:'qid',n:'品质 高→低'},{k:'name',n:'名称'},{k:'id',n:'ID 小→大'}];
+const QUAL={1:['普通','#6b7280'],2:['稀有','#2563eb'],3:['史诗','#9333ea'],4:['传说','#d97706']};
+const qual=id=>QUAL[+id]||['未知','#9aa6bd'];
+const fmtNum=v=>{ const n=Number(v); return isFinite(n)?(Math.round(n*1000)/1000).toString():String(v==null?'':v); };
+const tplHtml=tpl=>esc(tpl).replace(/\{0\}|\{\}/g,'<span class="ph0">{0}</span>');
+const effRange=(tpl,lo,hi)=>{
+  const v=(lo==null||hi==null||lo===hi)?('<b>'+esc(fmtNum(lo==null?hi:lo))+'</b>')
+    :('<b>'+esc(fmtNum(lo))+'</b><span class="arr">→</span><b>'+esc(fmtNum(hi))+'</b>');
+  return String(tpl||'').replace(/\{0\}|\{\}/g,v);
+};
+const nameHtml=name=>{
+  const m=String(name||'').match(/^(.*?)([·・]\S{1,2})$/);
+  return m?(esc(m[1])+'<span class="nm-sym">'+esc(m[2])+'</span>'):esc(name);
+};
+function renderChip(){
+  const main=$('main');
+  main.innerHTML='<div class="loading"><div class="spin"></div><div>正在载入芯片数据…</div></div>';
+  fetchData(CUR_VER,'chips.json').then(function(data){
+    CHIPS=[];
+    Object.keys(data).forEach(function(k){
+      const rec=data[k]&&data[k]['芯片档案']?data[k]['芯片档案']:data[k];
+      if(!rec||typeof rec!=='object') return;
+      const b=rec['基础']||{};
+      const eff=(rec['效果']||[])[0]||null;
+      const lv=(eff&&eff['等级数值'])||[];
+      CHIPS.push({
+        id:b['数据ID'], name:b['名称']||('ID '+b['数据ID']),
+        shape:b['形状']||'', quality:b['品质']||'', qid:+b['品质ID']||0,
+        type:b['类型']||'', cat:b['分类']||'', attr:b['属性']||'',
+        tpl:(eff&&eff['模板'])||'', levels:lv,
+        lo:lv.length?lv[0].数值:null, hi:lv.length?lv[lv.length-1].数值:null
+      });
+    });
+    CHIPS.forEach(c=>{ c._s=(c.name+' '+c.cat+' '+c.attr+' '+c.shape+' '+c.type).toLowerCase(); });
+    renderChipGrid(main);
+  }).catch(function(err){
+    main.innerHTML='<div class="empty"><div class="big">芯片数据载入失败</div><div class="err">'+esc(err.message)+'</div></div>';
+  });
+}
+function chipCounts(get){
+  const m={};
+  CHIPS.forEach(c=>{ const v=get(c); if(v==null||v==='')return; m[v]=(m[v]||0)+1; });
+  return Object.keys(m).sort(function(a,b){ return m[b]-m[a]; }).map(k=>({v:k,c:m[k],n:k}));
+}
+function chipFiltered(){
+  const q=chipKeyword.trim().toLowerCase();
+  const list=CHIPS.filter(function(c){
+    if(q && c._s.indexOf(q)<0) return false;
+    if(chipShape.length&&chipShape.indexOf(c.shape)<0) return false;
+    if(chipQuality.length&&chipQuality.indexOf(c.quality)<0) return false;
+    if(chipType.length&&chipType.indexOf(c.type)<0) return false;
+    return true;
+  });
+  if(chipSort==='qid') list.sort((a,b)=>b.qid-a.qid||a.id-b.id);
+  else if(chipSort==='name') list.sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN'));
+  else list.sort((a,b)=>(a.id||0)-(b.id||0));
+  return list;
+}
+function chipCardHTML(c){
+  const q=qual(c.qid);
+  return '<div class="chip tap" tabindex="0" data-id="'+esc(c.id)+'" style="--q:'+q[1]+'">'+
+    '<div class="chip-hd"><span class="glyph">'+shapeSVG(c.shape)+'</span>'+
+      '<span class="qbadge">'+esc(c.quality||'—')+'</span></div>'+
+    '<div class="chip-nm">'+nameHtml(c.name)+'</div>'+
+    '<div class="chip-meta"><span class="tag sh">'+esc(shapeShort(c.shape))+'</span>'+
+      (c.cat?'<span class="tag">'+esc(c.cat)+'</span>':'')+'</div>'+
+    (c.tpl?'<div class="chip-eff">'+effRange(c.tpl,c.lo,c.hi)+'</div>':'')+
+    '</div>';
+}
+function renderChipGrid(mainEl){
+  const list=chipFiltered();
+  mainEl.innerHTML='<div class="toolbar" data-qid="cq">'+
+      '<h2>芯片 <span class="count">'+list.length+' / '+CHIPS.length+' 个</span></h2>'+
+      '<div class="selects">'+
+        ddHtml('形状','形状',chipCounts(c=>c.shape),chipShape,null)+
+        ddHtml('品质','品质',chipCounts(c=>c.quality),chipQuality,null)+
+        ddHtml('类型','类型',chipCounts(c=>c.type),chipType,null)+
+        '<div class="sel" data-kind="sort"><button class="sel-btn" type="button" data-sort="1">'+
+          '<span class="ic">排</span><span>'+esc((CHIP_SORTS.find(s=>s.k===chipSort)||CHIP_SORTS[0]).n)+'</span>'+
+          '<span class="arrow">▼</span></button></div>'+
+      '</div>'+
+      searchHTML('cq','搜索芯片名 / 分类…',chipKeyword)+
+    '</div>'+
+    (list.length?'<div class="grid">'+list.map(chipCardHTML).join('')+'</div>'
+      :'<div class="empty"><div class="big">没有匹配的芯片</div><div>试着放宽筛选条件，或清空搜索关键词。</div></div>');
+  bindChip(mainEl);
+}
+function bindChip(mainEl){
+  const tb=mainEl.querySelector('.toolbar');
+  if(tb) tb.addEventListener('click',function(e){
+    const sb=e.target.closest('.sel-btn');
+    if(sb){
+      const drop=sb.parentNode;
+      if(drop.dataset.kind==='sort'){
+        const i=CHIP_SORTS.findIndex(s=>s.k===chipSort);
+        chipSort=CHIP_SORTS[(i+1)%CHIP_SORTS.length].k; renderChipGrid(mainEl); return;
+      }
+      const open=!drop.classList.contains('open');
+      tb.querySelectorAll('.sel').forEach(d=>d.classList.remove('open'));
+      if(open) drop.classList.add('open');
+      return;
+    }
+    const opt=e.target.closest('.opt');
+    if(opt){
+      const k=opt.dataset.k, v=opt.dataset.v;
+      const arr=k==='形状'?chipShape:(k==='品质'?chipQuality:chipType);
+      const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v);
+      renderChipGrid(mainEl); return;
+    }
+  });
+  const q=mainEl.querySelector('#cq');
+  if(q) q.addEventListener('input',function(){ chipKeyword=this.value; renderChipGrid(mainEl); });
+  const grid=mainEl.querySelector('.grid');
+  if(grid) grid.addEventListener('click',function(e){
+    const card=e.target.closest('.chip'); if(!card) return;
+    const c=CHIPS.find(x=>String(x.id)===card.dataset.id); if(!c) return;
+    const q=qual(c.qid);
+    const kv=arr=>arr.filter(x=>x[1]).map(x=>'<div class="mkv"><div class="k">'+esc(x[0])+'</div><div class="v">'+esc(x[1])+'</div></div>').join('');
+    const lv=(c.levels||[]).map(l=>'<div class="lvpill"><i>L'+esc(l['等级'])+'</i><b>'+esc(fmtNum(l['数值']))+'</b></div>').join('');
+    openModal('<button class="mclose" type="button" aria-label="关闭">✕</button>'+
+      '<div class="mhd" style="--q:'+q[1]+'"><span class="glyph">'+shapeSVG(c.shape)+'</span>'+
+        '<div><h3>'+esc(c.name)+'</h3><div class="sub">#'+esc(c.id)+' · '+esc(c.type||'—')+' · '+esc(shapeShort(c.shape))+'</div></div></div>'+
+      '<div class="mgrid">'+kv([['品质',c.quality],['形状',shapeShort(c.shape)],['分类',c.cat],['属性',c.attr],['类型',c.type],['数据 ID',c.id]])+'</div>'+
+      (c.tpl?'<div class="meff"><h4>效果模板</h4><div class="efftext">'+tplHtml(c.tpl)+'</div>'+
+        '<h4 style="margin-top:14px">1 → 10 级数值</h4><div class="lvrow">'+lv+'</div></div>':'')+
+      '<div style="margin-top:16px;font-size:11.5px;color:var(--muted)">模板中高亮的 <b>{0}</b> 即下表对应等级的数值。</div>');
+  });
+}
+
+/* ============================================================
+   版本对比（diff）
+   ============================================================ */
+const DIFF_FILES=[
+  {title:'车辆',file:'vehicles.json',getName:r=>{const b=(r&&r['车辆档案']?r['车辆档案']:r)['基础']||{};return b['名称']||'';}},
+  {title:'地图',file:'tracks.json',getName:r=>r['名称']},
+  {title:'芯片',file:'chips.json',getName:r=>((r&&r['芯片档案']?r['芯片档案']:r)['基础']||{})['名称']},
+  {title:'活动',file:'activities.json',getName:r=>r['名称']},
+  {title:'赛季活动',file:'season_activities.json',getName:g=>g['赛季']},
+  {title:'街头车神',file:'street_god.json',getName:r=>r['地图']||r['期次']},
+  {title:'道具',file:'items.json',getName:r=>r.name},
+  {title:'称号',file:'titles.json',getName:r=>r['名称']},
+  {title:'游戏介绍',file:'game_intro.json',getName:r=>(r['标题']||[])[0]||r['顶部标题']||('#'+r['数据ID'])},
+  {title:'平衡性更新',file:'balance_updates.json',getName:r=>r['版本号']}
+];
+let diffA='', diffB='', diffSel=0, diffQuery='', diffFilter=null, diffCards=null, diffSelBack=0;
+function renderDiff(){
+  const main=$('main');
+  const vers=VERSIONS.slice().sort((a,b)=>Number(b.id)-Number(a.id));
+  if(!diffA) diffA=vers[1]?vers[1].id:vers[0].id;
+  if(!diffB) diffB=vers[0].id;
+  function selOpts(val,onSel){
+    return '<div class="sel" id="ds'+(onSel?'A':'B')+'"><button class="sel-btn" type="button"><span class="ic">'+(onSel?'旧':'新')+'</span><span class="txt"><b>'+esc(val)+'</b><i>'+esc(verTime(val).slice(0,10))+'</i></span><span class="arrow">▼</span></button>'+
+      '<div class="sel-list">'+vers.map(o=>'<div class="opt'+(o.id===val?' on':'')+'" data-v="'+esc(o.id)+'">'+esc(o.id)+'<span class="hint">'+esc(verTime(o.id).slice(0,10))+'</span></div>').join('')+'</div></div>';
+  }
+  main.innerHTML='<div class="diff-top">'+
+      '<div class="dtitle"><h2>版本对比</h2><span class="sub">对比两个版本各模块的新增 · 删除 · 修改</span></div>'+
+      '<div class="dvers">'+selOpts(diffA,1)+
+        '<button class="dswap" id="diffSwap" type="button" title="交换新旧版本" aria-label="交换新旧版本">⇄</button>'+
+        selOpts(diffB,0)+'</div>'+
+      '<div class="dacts"><button class="dact" id="diffExpand" type="button">展开全部</button>'+
+        '<button class="dact" id="diffCollapse" type="button">收起全部</button>'+
+        '<button class="dact" id="diffFresh" type="button" title="重新读取两个版本的数据">刷新数据</button></div>'+
+    '</div>'+
+    '<div id="diffSummary"></div>'+
+    '<div class="diff-bar"><div class="tchipbar" id="diffTbar"></div>'+
+      '<div class="dsearch"><input id="diffQ" type="search" placeholder="搜索名称或字段…" value="'+esc(diffQuery)+'"></div></div>'+
+    '<div id="diffBody"></div>';
+  document.title='版本对比 · 车辆档案库';
+  bindDiffSel(main);
+  $('diffSwap').addEventListener('click',function(){ const t=diffA; diffA=diffB; diffB=t; renderDiff(); });
+  $('diffExpand').addEventListener('click',function(){ diffSetAll(true); });
+  $('diffCollapse').addEventListener('click',function(){ diffSetAll(false); });
+  $('diffFresh').addEventListener('click',function(){ refreshData(diffA); refreshData(diffB); runDiff(); });
+  const q=$('diffQ');
+  /* 搜索时自动跨全部模块（否则只能在当前选中的那个模块里找），
+     清空后回到搜索前选中的模块。 */
+  q.addEventListener('input',function(){
+    diffQuery=q.value.trim();
+    const was=diffSel;
+    if(diffQuery){
+      if(diffSel!==0){ diffSelBack=diffSel; diffSel=0; }
+    } else if(diffSelBack){
+      diffSel=diffSelBack; diffSelBack=0;
+    }
+    if(diffSel!==was) renderDiffCards(diffA,diffB);
+    else applyDiffFilter();
+  });
+  runDiff();
+}
+/* 刷新：清掉两个版本的数据缓存后重跑（原实现对函数调用做 delete，无效且会重置车辆索引） */
+function refreshData(v){
+  DIFF_FILES.forEach(function(f){ delete DATA_CACHE[v+'|'+f.file]; });
+  CAR_INDEX=[]; CAR_FULL=Object.create(null);
+}
+function bindDiffSel(main){
+  main.querySelectorAll('#dsA,#dsB').forEach(function(box){
+    box.querySelector('.sel-btn').addEventListener('click',function(e){
+      e.stopPropagation();
+      const open=box.classList.contains('open');
+      main.querySelectorAll('.sel').forEach(b=>b.classList.remove('open'));
+      if(!open) box.classList.add('open');
+    });
+    box.querySelectorAll('.opt').forEach(function(o){
+      o.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(box.id==='dsA') diffA=o.getAttribute('data-v'); else diffB=o.getAttribute('data-v');
+        renderDiff();
+      });
+    });
+  });
+}
+/* 展开 / 收起全部
+   展开：模块分区与变更卡片全部打开（条目数在几十量级，逐张懒渲染足够快）。
+   收起：分区与卡片全部收起。 */
+function diffSetAll(open){
+  document.querySelectorAll('#diffBody .dcard.pick').forEach(function(c){
+    c.classList.toggle('open',open);
+    if(open) renderCardBody(c);
+  });
+}
+/* 关键词过滤：纯前端，不重新请求 */
+function applyDiffFilter(){
+  const body=$('diffBody');
+  if(!body) return;
+  const q=diffQuery.toLowerCase();
+  if(!q){
+    body.querySelectorAll('.dcard,.dsec').forEach(function(e){ e.style.display=''; });
+    const t=document.getElementById('diffNoHit'); if(t) t.style.display='none';
+    return;
+  }
+  let shown=0;
+  body.querySelectorAll('.dcard').forEach(function(el){
+    const hit=(el.getAttribute('data-search')||'').toLowerCase().indexOf(q)>=0;
+    el.style.display=hit?'':'none';
+    if(hit) shown++;
+  });
+  body.querySelectorAll('.dsec').forEach(function(s){
+    let n=0; s.querySelectorAll('.dcard').forEach(function(it){ if(it.style.display!=='none') n++; });
+    s.style.display=n?'':'none';
+  });
+  let tip=document.getElementById('diffNoHit');
+  if(!shown){
+    if(!tip){
+      tip=document.createElement('div'); tip.id='diffNoHit'; tip.className='empty';
+      tip.innerHTML='<div class="big">没有匹配项</div><div class="err">换个关键词试试</div>';
+      body.appendChild(tip);
+    }
+    tip.style.display='';
+  } else if(tip) tip.style.display='none';
+}
+/* ---- 轻量递归 diff：结构 / [旧,新] ---- */
+function diffValue(a,b){
+  if(a===b) return null;
+  if(a===undefined||a===null) return [a,b];
+  if(b===undefined||b===null) return [a,b];
+  const ta=typeof a, tb=typeof b;
+  if(ta!=='object'||tb!=='object') return [a,b];
+  if(Array.isArray(a)!==Array.isArray(b)) return [a,b];
+  if(Array.isArray(a)) return diffArray(a,b);
+  const out={};
+  const keys=Object.keys(a).concat(Object.keys(b).filter(k=>!(k in a)));
+  keys.forEach(function(k){
+    const d=diffValue(a[k],b[k]);
+    if(d!==null) out[k]=d;
+  });
+  return Object.keys(out).length?out:null;
+}
+/* 数组元素匹配键：优先唯一ID类字段（跨版本稳定）；无ID则 名称/赛季+出现序号，
+   保证重复元素（如多场红包雨）一一对应，不会错位配对造成虚假的"ID变了/新增" */
+function elemKey(x, occ){
+  if(x&&typeof x==='object'){
+    for(const f of ['数据ID','技能ID','皮肤ID','版本ID','id','编号','ID','期次']){
+      if(x[f]!==undefined) return 'f:'+String(x[f]);
+    }
+    const base=(x['名称']!==undefined?x['名称']:(x['name']!==undefined?x['name']:(x['赛季']!==undefined?x['赛季']:'#')))||'#';
+    return 'n:'+base+':'+occ;
+  }
+  return 'i:'+occ;
+}
+function diffArray(a,b){
+  const mapB={}, found={}, out={added:[],deleted:[],modified:[]};
+  /* b 侧：多值映射 key -> index[]；无ID类字段的元素按出现次数编号 */
+  const seen={};
+  b.forEach(function(x,i){
+    let k=elemKey(x,0);
+    if(k.indexOf('n:')===0){
+      seen[k]=(seen[k]||0)+1;
+      k='n:'+(x&&(x['名称']!==undefined?x['名称']:(x['name']!==undefined?x['name']:(x['赛季']!==undefined?x['赛季']:'#')))||'#')+':'+seen[k];
+    }
+    (mapB[k]=mapB[k]||[]).push(i);
+  });
+  const seenA={};
+  a.forEach(function(x,i){
+    let k=elemKey(x,0);
+    if(k.indexOf('n:')===0){
+      seenA[k]=(seenA[k]||0)+1;
+      k='n:'+(x&&(x['名称']!==undefined?x['名称']:(x['name']!==undefined?x['name']:(x['赛季']!==undefined?x['赛季']:'#')))||'#')+':'+seenA[k];
+    }
+    const list=mapB[k]||[];
+    if(list.length){
+      const bi=list.shift(); found[bi]=true;
+      const d=diffValue(x,b[bi]);
+      if(d) out.modified.push({key:k,name:x&&(x['名称']||x['name']),left:x,right:b[bi],delta:d});
+    } else out.deleted.push({key:k,name:x&&(x['名称']||x['name'])});
+  });
+  b.forEach(function(x,i){ if(!found[i]) out.added.push({key:i,name:x&&(x['名称']||x['name'])}); });
+  if(!out.added.length&&!out.deleted.length&&!out.modified.length) return null;
+  return out;
+}
+function analyzeFile(av,bv,cfg){
+  const isArr=Array.isArray(av);
+  if(isArr){
+    return diffArray(av,bv);
+  }
+  const out={added:[],deleted:[],modified:[]};
+  const aKeys=Object.keys(av||{}), bKeys=Object.keys(bv||{}), bSet={};
+  bKeys.forEach(k=>bSet[k]=1);
+  aKeys.forEach(function(k){
+    if(!bSet[k]){ out.deleted.push({key:k,name:cfg.getName(av[k])}); }
+    else {
+      const d=diffValue(av[k],bv[k]);
+      if(d) out.modified.push({key:k,name:cfg.getName(bv[k]),left:av[k],right:bv[k],delta:d});
+    }
+  });
+  bKeys.forEach(function(k){ if(aKeys.indexOf(k)<0) out.added.push({key:k,name:cfg.getName(bv[k])}); });
+  return out;
+}
+function countLeaf(d){
+  if(!d||typeof d!=='object') return 0;
+  if(Array.isArray(d)) return d.length===2||d.length===1?1:0;
+  if((d.added&&d.added.length)||(d.deleted&&d.deleted.length)||(d.modified&&d.modified.length)) return d.added.length+d.deleted.length+d.modified.length;
+  let n=0; for(const k in d){ if(Object.prototype.hasOwnProperty.call(d,k)) n+=countLeaf(d[k]); }
+  return n;
+}
+/* ---- 渲染 ---- */
+function fval(v){
+  if(v===null||v===undefined) return '';
+  if(typeof v==='string') return v;
+  try{ return JSON.stringify(v); }catch(e){ return String(v); }
+}
+function cleanKey(k){ return String(k).replace(/^[fn]:/,'').replace(/:([^:]+)$/,''); }
+const CAT_PRIO=['基础','核心性能','氮气','大招','SP技能','被动','RELATION','芯片','车辆皮肤','故事','车辆缩略图'];
+const CAT_NAMES={'RELATION':'克制关系','核心性能':'核心性能','SP技能':'SP技能','车辆缩略图':'缩略图'};
+function listCats(rec){
+  if(!rec||typeof rec!=='object')return [];
+  for(const c of ['车辆档案','芯片档案']){ const x=rec[c];
+    if(x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length) return Object.keys(x); }
+  return Object.keys(rec);
+}
+function catVal(rec,cat){
+  if(!rec||typeof rec!=='object')return undefined;
+  for(const c of ['车辆档案','芯片档案']){ const x=rec[c]; if(x&&cat in x) return x[cat]; }
+  return rec[cat];
+}
+function renderLeafRow(path,d){
+  if(Array.isArray(d)&&d.length===2){
+    const oldV=d[0],newV=d[1];
+    return '<div class="frow"><div class="fk">'+esc(path)+'</div><div class="fv fpair">'+
+      '<span class="pv old">'+esc2(trunc(fval(oldV),180))+'</span><span class="arrow">→</span>'+
+      '<span class="pv new">'+esc2(trunc(fval(newV),180))+'</span></div></div>';
+  }
+  if(Array.isArray(d)&&d.length===1){
+    return '<div class="frow"><div class="fk">'+esc(path)+'</div><div class="fv"><span class="ff new">'+esc2(trunc(fval(d[0]),180))+'</span></div></div>';
+  }
+  return '';
+}
+const esc2=esc;
+function trunc(s,n){ s=String(s); return s.length>n ? s.slice(0,n)+'…' : s; }
+/* 把嵌套 diff 打平成「字段 / 旧 / 新」三元组，供表格化展示 */
+function pushDeltaRows(d,path,out){
+  if(!d) return out;
+  if(Array.isArray(d)){
+    if(d.length>=2) out.push({k:path,o:d[0],n:d[1]});
+    else if(d.length===1) out.push({k:path,o:null,n:d[0]});
+    return out;
+  }
+  if(d.added||d.deleted||d.modified){
+    const nm=x=>x.name||('#'+cleanKey(x.key));
+    const parts=[];
+    if(d.added&&d.added.length) parts.push('新增 '+d.added.length+' 项 · '+d.added.slice(0,6).map(nm).join('、')+(d.added.length>6?' 等':''));
+    if(d.deleted&&d.deleted.length) parts.push('删除 '+d.deleted.length+' 项 · '+d.deleted.slice(0,6).map(nm).join('、')+(d.deleted.length>6?' 等':''));
+    if(d.modified&&d.modified.length) parts.push('其中修改 '+d.modified.length+' 项');
+    out.push({k:path||'（列表）',o:null,n:parts.join('；')});
+    (d.modified||[]).slice(0,20).forEach(function(m){
+      pushDeltaRows(m.delta,(path?path+' · ':'')+(m.name||('#'+cleanKey(m.key))),out);
+    });
+    return out;
+  }
+  Object.keys(d).forEach(function(k){ pushDeltaRows(d[k], path?path+'.'+k:k, out); });
+  return out;
+}
+function buildCats(item){
+  const l=item&&item.left, r=item&&item.right, seen={}, cats=[];
+  listCats(l).concat(listCats(r)).forEach(function(c){ if(!seen[c]){ seen[c]=1; cats.push(c); } });
+  const out=[];
+  cats.forEach(function(cat){
+    const d=diffValue(catVal(l,cat),catVal(r,cat));
+    if(d){ const n=countLeaf(d); if(n>0) out.push({cat:cat,delta:d,count:n}); }
+  });
+  out.sort(function(a,b){ const i=CAT_PRIO.indexOf(a.cat), j=CAT_PRIO.indexOf(b.cat); return (i<0?99:i)-(j<0?99:j); });
+  return out;
+}
+function runDiff(){
+  const body=$('diffBody'), sumEl=$('diffSummary');
+  if(!body) return;
+  const va=diffA, vb=diffB;
+  body.innerHTML='<div class="loading"><div class="spin"></div><div>正在对比 '+esc(va)+' → '+esc(vb)+'…</div></div>';
+  if(sumEl) sumEl.innerHTML='';
+  Promise.all(DIFF_FILES.map(function(cfg){
+    return Promise.all([fetchData(va,cfg.file).catch(()=>null), fetchData(vb,cfg.file).catch(()=>null)]).then(function(res){
+      const av=res[0], bv=res[1];
+      const r=analyzeFile(av,bv,cfg);
+      r.countA=av?(Array.isArray(av)?av.length:Object.keys(av).length):0;
+      r.countB=bv?(Array.isArray(bv)?bv.length:Object.keys(bv).length):0;
+      return {cfg:cfg,res:r};
+    });
+  })).then(function(cards){
+    diffCards=cards;
+    renderDiffCards(va,vb);
+  }).catch(function(err){
+    body.innerHTML='<div class="empty"><div class="big">对比失败</div><div class="err">'+esc(err.message)+'</div></div>';
+  });
+}
+function diffTotal(res){ return res.added.length+res.deleted.length+res.modified.length; }
+
+/* ---- 渲染：汇总 + 模块筛选 chips + 变更卡片墙 ---- */
+function renderDiffCards(va,vb){
+  const body=$('diffBody'), sumEl=$('diffSummary');
+  const cards=diffCards||[];
+  /* 没有「全部」这一档：首次进入直接落在第一个有变更的模块上，少一次点击。
+     搜索时 diffSel 临时置 0 跨模块找，清空后回到原来的模块。 */
+  if(diffSel===0&&!diffQuery){
+    const first=cards.findIndex(function(x){ return diffTotal(x.res)>0; });
+    if(first>=0) diffSel=first+1;
+  }
+  /* 模块 chips：带变更数量，切换不重新请求 */
+  $('diffTbar').innerHTML=DIFF_FILES.map(function(f,i){
+      const c=cards[i]?diffTotal(cards[i].res):0;
+      return '<div class="tchip'+(diffSel===i+1?' on':'')+(c?'':' zero')+'" data-i="'+(i+1)+'">'+esc(f.title)+(c?'<span class="cnt">'+c+'</span>':'')+'</div>';
+    }).join('');
+  $('diffTbar').querySelectorAll('.tchip').forEach(function(c){
+    c.addEventListener('click',function(){
+      diffSel=Number(c.getAttribute('data-i'));
+      renderDiffCards(va,vb);
+    });
+  });
+  const view=diffSel===0?cards:[cards[diffSel-1]].filter(Boolean);
+  const tA=view.reduce((s,x)=>s+x.res.countA,0);
+  const tB=view.reduce((s,x)=>s+x.res.countB,0);
+  const tAdd=view.reduce((s,x)=>s+x.res.added.length,0);
+  const tDel=view.reduce((s,x)=>s+x.res.deleted.length,0);
+  const tMod=view.reduce((s,x)=>s+x.res.modified.length,0);
+  /* 汇总：左版本读数，右可点选的变更统计 */
+  const tAll=tAdd+tDel+tMod;
+  sumEl.innerHTML='<div class="dsum">'+
+      '<div class="dsum-ver"><span class="lab">旧版本</span><b>'+tA.toLocaleString()+'</b><span class="sub">'+esc(verTime(va).slice(0,10))+'</span>'+
+        '<span class="arw">→</span>'+
+        '<span class="lab">新版本</span><b>'+tB.toLocaleString()+'</b><span class="sub">'+esc(verTime(vb).slice(0,10))+'</span></div>'+
+      '<div class="dsum-total">共 <b>'+tAll+'</b> 处变更</div>'+
+      '<div class="dsum-stats">'+
+        '<button class="dstat add'+(diffFilter==='add'?' on':'')+(tAdd?'':' zero')+'" data-f="add"><b>'+(tAdd?'+'+tAdd:'0')+'</b><span>新增</span></button>'+
+        '<button class="dstat del'+(diffFilter==='del'?' on':'')+(tDel?'':' zero')+'" data-f="del"><b>'+(tDel?'−'+tDel:'0')+'</b><span>删除</span></button>'+
+        '<button class="dstat mod'+(diffFilter==='mod'?' on':'')+(tMod?'':' zero')+'" data-f="mod"><b>'+tMod+'</b><span>修改</span></button>'+
+      '</div></div>';
+  sumEl.querySelectorAll('.dstat').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const f=btn.getAttribute('data-f');
+      diffFilter=(diffFilter===f)?null:f;
+      renderDiffCards(va,vb);
+    });
+  });
+  if(!view.length){ body.innerHTML='<div class="empty"><div class="big">暂无数据</div></div>'; return; }
+  const total=view.reduce((s,x)=>s+diffTotal(x.res),0);
+  if(!total){
+    body.innerHTML='<div class="diff-empty"><div class="ic">✓</div><div class="big">两个版本没有差异</div>'+
+      '<div class="s">'+esc(va)+' 与 '+esc(vb)+' 的数据完全一致</div></div>';
+    return;
+  }
+  body.innerHTML=view.map(modShell).join('');
+  bindDiffBody();
+  applyDiffFilter();
+}
+function modShell(x){
+  const res=x.res, cfg=x.cfg, ci=diffCards.indexOf(x);
+  const inner=modBody(x);
+  if(!inner) return '';
+  const tags=(res.added.length?'<i class="add">+'+res.added.length+'</i>':'')+
+    (res.deleted.length?'<i class="del">−'+res.deleted.length+'</i>':'')+
+    (res.modified.length?'<i class="mod">'+res.modified.length+'</i>':'');
+  return '<section class="dsec" data-ci="'+ci+'">'+
+    '<header class="dsec-hd">'+
+      '<span class="dsec-t">'+esc(cfg.title)+'</span>'+
+      '<span class="dsec-tags">'+tags+'</span>'+
+      '<span class="dsec-ct"><b>'+res.countA+'</b><span class="to">→</span><b>'+res.countB+'</b></span></header>'+
+    '<div class="dsec-bd"><div class="dgrid">'+inner+'</div></div></section>';
+}
+/* 模块内卡片顺序固定：新增 → 删除 → 修改。
+   先看到「来了什么」，再看到「走了什么」，最后看「改了什么」；
+   三类混排在同一张网格里，靠左侧色条 + 类型徽标区分，
+   既保持语义顺序，又不把页面切成三段稀疏的空行。 */
+function modBody(x){
+  const res=x.res, ci=diffCards.indexOf(x);
+  let out='';
+  if(!diffFilter||diffFilter==='add') out+=res.added.map(function(it){ return cardAddDel('add',it); }).join('');
+  if(!diffFilter||diffFilter==='del') out+=res.deleted.map(function(it){ return cardAddDel('del',it); }).join('');
+  if(!diffFilter||diffFilter==='mod') out+=res.modified.map(function(it,ii){ return cardMod(it,ci,ii); }).join('');
+  return out;
+}
+/* 新增 / 删除：数据里只有 name + key，没有可展开的字段明细，故不做展开 */
+function cardAddDel(kind,it){
+  const nm=it.name||'（无名称）';
+  return '<div class="dcard '+kind+'" data-search="'+esc(nm+' '+cleanKey(it.key))+'">'+
+    '<div class="dcard-hd"><span class="dcard-kind">'+(kind==='add'?'新增':'删除')+'</span>'+
+      '<span class="dcard-nm">'+esc(nm)+'</span></div>'+
+    '<div class="dcard-foot"><span class="dcard-id">'+esc(cleanKey(it.key))+'</span></div></div>';
+}
+/* 修改：卡片可反复点开。正面先给 2 条「旧 → 新」预览，展开后是字段卡网格 */
+function cardMod(it,ci,ii){
+  const rows=pushDeltaRows(it.delta,'',[]);
+  const n=countLeaf(it.delta);
+  const sidx=[it.name||'',cleanKey(it.key),rows.map(function(r){ return r.k+' '+fval(r.o)+' '+fval(r.n); }).join(' ')].join(' ');
+  return '<div class="dcard mod pick tap" tabindex="0" data-ci="'+ci+'" data-ii="'+ii+'" data-search="'+esc(sidx)+'">'+
+    '<div class="dcard-hd"><span class="dcard-kind">修改</span>'+
+      '<span class="dcard-nm">'+esc(it.name||'（无名称）')+'</span>'+
+      '<span class="dcard-ar">▾</span></div>'+
+    '<div class="dcard-foot"><span class="dcard-id">'+esc(cleanKey(it.key))+'</span>'+
+      '<span class="dcard-n">'+n+' 处</span></div>'+
+    '<div class="dcard-prev">'+rows.slice(0,2).map(prevRow).join('')+
+      (rows.length>2?'<div class="more">还有 '+(rows.length-2)+' 处，点开查看全部</div>':'')+'</div>'+
+    '<div class="dcard-bd"></div></div>';
+}
+function prevRow(r){
+  const o=(r.o===null||r.o===undefined)?'—':trunc(fval(r.o),42);
+  const n=(r.n===null||r.n===undefined)?'—':trunc(fval(r.n),42);
+  return '<div class="pr"><span class="pk">'+esc(r.k||'值')+'</span>'+
+    '<span class="po">'+esc(o)+'</span><span class="ar">→</span>'+
+    '<span class="pn">'+esc(n)+'</span></div>';
+}
+function bindDiffBody(){
+  const body=$('diffBody');
+  body.querySelectorAll('.dcard.pick').forEach(function(c){
+    c.addEventListener('click',function(){
+      c.classList.toggle('open');
+      if(c.classList.contains('open')) renderCardBody(c);
+    });
+    /* 展开后正文区可自由选中文本，点它不应把卡片收起 —— 收起点头部即可 */
+    c.querySelector('.dcard-bd').addEventListener('click',function(e){ e.stopPropagation(); });
+  });
+}
+/* 展开内容：懒渲染，按分类分块，每块一张「字段卡」网格 —— 一张卡一个字段，上旧下新 */
+function renderCardBody(card){
+  if(card.dataset.rendered) return;
+  const x=diffCards[+card.dataset.ci], it=x.res.modified[+card.dataset.ii];
+  const cats=buildCats(it);
+  let html;
+  if(cats.length){
+    html=cats.map(function(c){
+      return '<div class="dfgrp"><div class="dfgrp-t">'+esc(CAT_NAMES[c.cat]||c.cat)+'<i>'+c.count+' 处</i></div>'+
+        '<div class="dfgrid">'+pushDeltaRows(c.delta,'',[]).map(fieldCard).join('')+'</div></div>';
+    }).join('');
+  } else {
+    html='<div class="dfgrp"><div class="dfgrid">'+pushDeltaRows(it.delta,'',[]).map(fieldCard).join('')+'</div></div>';
+  }
+  card.querySelector('.dcard-bd').innerHTML=html;
+  card.dataset.rendered='1';
+}
+function fieldCard(r){
+  const hasOld=r.o!==null&&r.o!==undefined, hasNew=r.n!==null&&r.n!==undefined;
+  let rows;
+  if(hasOld&&hasNew){
+    rows='<div class="row old"><span class="lab">旧</span><span class="dtxt">'+esc(trunc(fval(r.o),200))+'</span></div>'+
+         '<div class="row new"><span class="lab">新</span><span class="dtxt">'+esc(trunc(fval(r.n),200))+'</span></div>';
+  } else if(hasNew){
+    rows='<div class="row only"><span class="lab">新</span><span class="dtxt">'+esc(trunc(fval(r.n),200))+'</span></div>';
+  } else {
+    rows='<div class="row old"><span class="lab">旧</span><span class="dtxt">'+esc(trunc(fval(r.o),200))+'</span></div>'+
+         '<div class="row"><span class="lab">新</span><span class="dtxt"><span class="dnil">—</span></span></div>';
+  }
+  return '<div class="dfcard"><span class="dk">'+esc(r.k||'值')+'</span>'+rows+'</div>';
+}
+
+/* ============================================================
+   版本切换
+   ============================================================ */
+function setVer(v){
+  if(!VERSIONS.some(x=>x.id===v) || v===CUR_VER) return;
+  CUR_VER=v;
+  try{ localStorage.setItem('va_ver',v); }catch(e){}
+  renderVer();
+  /* 清空旧版本缓存索引，重新按需加载 */
+  CAR_INDEX=[]; CAR_FULL=Object.create(null); TRACKS=[]; CHIPS=[];
+  SEASON_START=null;
+  route();
+}
+
+/* ============================================================
+   移动端抽屉
+   ============================================================ */
+const navToggle=$('navToggle'), navMask=$('navMask');
+function setNav(open){ document.body.classList.toggle('nav-open',open); }
+navToggle.onclick=function(){ setNav(!document.body.classList.contains('nav-open')); };
+navMask.onclick=function(){ setNav(false); };
+/* 抽屉打开时，点侧栏与汉堡按钮以外的任何地方都关闭 ——
+   只靠遮罩是不够的：侧栏压在遮罩上方，点在它旁边容易没反应。 */
+document.addEventListener('click',function(e){
+  if(!document.body.classList.contains('nav-open')) return;
+  if(e.target.closest('.sidebar')||e.target.closest('#navToggle')) return;
+  setNav(false);
+},true);
+/* 切换路由后自动收起抽屉，移动端点导航不会卡在打开状态 */
+addEventListener('hashchange',function(){ setNav(false); });
+addEventListener('keydown',function(e){ if(e.key==='Escape') setNav(false); });
+
+/* 键盘可达：所有可点卡片都能 Tab 聚焦 + 回车/空格触发 */
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Spacebar') return;
+  const el=document.activeElement;
+  if(!el||el.tagName==='A'||el.tagName==='BUTTON'||el.tagName==='INPUT') return;
+  if(el.classList&&el.classList.contains('tap')){ e.preventDefault(); el.click(); }
+});
+
+/* ============================================================
+   启动
+   ============================================================ */
+async function boot(){
+  try{
+    const v=await fetch('ace/versions.json').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+    VERSIONS=v;
+  }catch(e){
+    VERSIONS=[];
+  }
+  const def=(function(){
+    try{ const s=localStorage.getItem('va_ver'); if(s&&VERSIONS.some(x=>x.id===s)) return s; }catch(e){}
+    return VERSIONS.length?VERSIONS[VERSIONS.length-1].id:'';
+  })();
+  CUR_VER=def;
+  if(!VERSIONS.length){
+    $('main').innerHTML='<div class="empty"><div class="big">版本清单载入失败</div><div>请通过 HTTP 访问，且 <code>ace/versions.json</code> 可访问。</div></div>';
+    return;
+  }
+  renderVer();
+  buildNav();
+  route();
+}
+boot();
+})();
 </script>
 </body>
 </html>
